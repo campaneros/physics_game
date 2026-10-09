@@ -1,0 +1,14 @@
+{
+  "name": "acceleratore",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Acceleratore: idle game di fisica con minigioco La forma nascosta",
+  "scripts": {
+    "check": "node check.js && node check-idle.js"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/core": "^8.5.3"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "appId": "io.github.campaneros.acceleratore",
+  "appName": "Acceleratore",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false
+  },
+  "loggingBehavior": "none"
+}

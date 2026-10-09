@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; manifest-src 'self'; worker-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="theme-color" content="#0b1220">
+  <meta name="color-scheme" content="dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Acceleratore">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+  <title>Acceleratore</title>
+</head>
+<body>
+  <header class="top">
+    <h1>Acceleratore</h1>
+    <dl class="hud">
+      <div><dt>Dati</dt><dd id="dati">0</dd></div>
+      <div><dt>Produzione</dt><dd id="rate">0/s</dd></div>
+      <div><dt>Energia</dt><dd id="energy">0</dd></div>
+      <div><dt>Bonus</dt><dd id="mult">×1.00</dd></div>
+    </dl>
+    <p id="banner" role="status"></p>
+  </header>
+
+  <main>
+    <section id="view-machine" class="view" aria-label="Macchina">
+      <div id="upgrades"></div>
+      <button id="shutdown" class="card" type="button"></button>
+    </section>
+
+    <section id="view-discoveries" class="view" aria-label="Scoperte" hidden>
+      <div id="target" class="card">
+        <h2 id="target-name"></h2>
+        <progress id="target-bar" value="0" max="1"></progress>
+        <p id="target-info"></p>
+        <button id="confirm" type="button" hidden>Conferma scoperta</button>
+      </div>
+      <p id="all-done" hidden>Tutte le scoperte confermate. Fai un Long Shutdown per moltiplicare la produzione.</p>
+      <ul id="disc-list"></ul>
+      <p id="budget" class="muted"></p>
+    </section>
+
+    <section id="view-play" class="view" aria-label="Sfida" hidden>
+      <div id="play-host"></div>
+    </section>
+    <section id="view-budget" class="view" aria-label="Budget" hidden>
+      <p id="budget-lock" class="card">Modalità budget: si sblocca dopo il primo Long Shutdown.</p>
+      <div id="budget-host"></div>
+    </section>
+  </main>
+
+  <nav id="tabs" aria-label="Sezioni">
+    <button type="button" data-view="machine" aria-selected="true">Macchina</button>
+    <button type="button" data-view="discoveries" aria-selected="false">Scoperte</button>
+    <button type="button" data-view="play" aria-selected="false">Sfida</button>
+    <button type="button" data-view="budget" aria-selected="false">Budget</button>
+  </nav>
+
+  <div id="overlay" hidden>
+    <div id="overlay-body"></div>
+  </div>
+
+  <script src="core.js"></script>
+  <script src="idle.js"></script>
+  <script src="minigame.js"></script>
+  <script src="budget.js"></script>
+  <script src="budget-ui.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>
