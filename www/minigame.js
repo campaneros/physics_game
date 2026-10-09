@@ -2,11 +2,11 @@
 (() => {
   'use strict';
   const { SHAPES, newGame, trace, entryFromPoint, isInward, score } = Core;
+  const tr = I18n.t;
 
   const AIM_STUB = 0.16;
   const MIN_DRAG = 0.05;
   const COLORS = ['#38bdf8', '#f472b6', '#facc15', '#4ade80', '#fb923c', '#c084fc'];
-  const HINT_PLAY = 'Tocca vicino a un bordo e trascina verso l\'interno, poi rilascia per lanciare.';
   const shapeById = new Map(SHAPES.map((s) => [s.id, s]));
 
   const el = (tag, cls, text) => {
@@ -28,7 +28,7 @@
     c.closePath();
   }
 
-  // opts: { seed, pool, maxLaunches, label, shareLabel, onNew(), onClose(result), onCancel() }
+  // opts: { seed, pool, maxLaunches, label, shareLabel, onNew(), onClose(result), onCancel(), onFinish(result) → testo del premio }
   function create(container, opts) {
     const maxLaunches = opts.maxLaunches || 15;
     const game = newGame(opts.seed, opts.pool);
@@ -41,23 +41,25 @@
     const status = el('p', 'mg-status');
     const canvas = el('canvas', 'mg-canvas');
     canvas.setAttribute('role', 'img');
-    canvas.setAttribute('aria-label', 'Arena di gioco: lancia particelle e osserva dove escono');
-    const hint = el('p', 'mg-hint', HINT_PLAY);
+    canvas.setAttribute('aria-label', tr('mg.aria'));
+    const hint = el('p', 'mg-hint', tr('mg.hint.play'));
+    const legend = el('p', 'mg-legend', tr('mg.legend'));
     hint.setAttribute('role', 'status');
     const choices = el('div', 'mg-choices');
     const result = el('div', 'mg-result');
     result.hidden = true;
     const resultText = el('p', 'mg-result-text');
     resultText.setAttribute('role', 'status');
+    const reward = el('p', 'mg-reward');
     const row = el('div', 'row');
-    result.append(resultText, row);
-    const cancel = opts.onCancel ? button('Annulla', () => opts.onCancel()) : null;
-    root.append(status, canvas, hint, result, choices);
+    result.append(resultText, reward, row);
+    const cancel = opts.onCancel ? button(tr('mg.cancel'), () => opts.onCancel()) : null;
+    root.append(status, canvas, hint, legend, result, choices);
     if (cancel) root.append(cancel);
     container.append(root);
 
     const ctx = canvas.getContext('2d');
-    const setStatus = () => { status.textContent = `${opts.label || ''} · Lanci: ${launches.length}/${maxLaunches}`; };
+    const setStatus = () => { status.textContent = tr('mg.status', { label: opts.label || '', n: launches.length, max: maxLaunches }); };
 
     // --- disegno -----------------------------------------------------------
     function dot(x, y, r, color, ring) {
@@ -87,16 +89,37 @@
         ctx.stroke();
       }
       const r = S * 0.022;
-      // i marcatori restano interi anche sul bordo dell'arena
-      const at = ([x, y]) => [Math.min(S - r, Math.max(r, x * S)), Math.min(S - r, Math.max(r, y * S))];
+      // lancio = cerchio pieno con freccia nella direzione; uscita = anello numerato; linea tratteggiata che li unisce
+      const R = S * 0.034;
+      const at = ([x, y]) => [Math.min(S - R, Math.max(R, x * S)), Math.min(S - R, Math.max(R, y * S))];
       launches.forEach((l, i) => {
         const color = COLORS[i % COLORS.length];
         const [ix, iy] = at(l.entry);
         const [ox, oy] = at(l.exit);
-        dot(ix, iy, r, color, false);
-        dot(ox, oy, r, color, true);
-        label(i + 1, ix, iy, S, '#0b1220');
+        const [dx, dy] = l.dir;
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.globalAlpha = 0.45;
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 6]);
+        ctx.beginPath();
+        ctx.moveTo(ix, iy);
+        ctx.lineTo(ox, oy);
+        ctx.stroke();
+        ctx.restore();
+        dot(ix, iy, R, color, false);
+        const k = R * 0.62;
+        ctx.fillStyle = '#0b1220';
+        ctx.beginPath();
+        ctx.moveTo(ix + dx * k, iy + dy * k);
+        ctx.lineTo(ix - dx * k * 0.6 - dy * k * 0.7, iy - dy * k * 0.6 + dx * k * 0.7);
+        ctx.lineTo(ix - dx * k * 0.6 + dy * k * 0.7, iy - dy * k * 0.6 - dx * k * 0.7);
+        ctx.closePath();
+        ctx.fill();
+        dot(ox, oy, R, '#0b1220', false);
+        dot(ox, oy, R, color, true);
         label(i + 1, ox, oy, S, color);
+        label(i + 1, ix + dx * R * 2.1, iy + dy * R * 2.1, S, color);
       });
       if (aim) {
         const [ex, ey] = aim.entry.p;
@@ -131,7 +154,7 @@
         pathPoly(c, sh.pts, 56 / 0.7, 28, 28);
         c.fillStyle = '#94a3c0';
         c.fill();
-        btn.append(thumb, el('span', null, sh.name));
+        btn.append(thumb, el('span', null, tr(`shape.${sh.id}`)));
         btn.addEventListener('click', () => onGuess(id));
         choices.append(btn);
       });
@@ -139,22 +162,23 @@
 
     function onGuess(id) {
       if (phase !== 'play') return;
-      if (!launches.length) { hint.textContent = 'Fai almeno un lancio prima di rispondere.'; return; }
+      if (!launches.length) { hint.textContent = tr('mg.hint.needlaunch'); return; }
       phase = 'done';
       const ok = id === game.answer;
       const n = launches.length;
       const pts = score(n, ok);
-      const answerName = shapeById.get(game.answer).name;
+      const answerName = tr(`shape.${game.answer}`);
       resultText.textContent = ok
-        ? `Esatto! Era: ${answerName}. ${n} ${n === 1 ? 'lancio' : 'lanci'}, ${pts} punti.`
-        : `Sbagliato. Era: ${answerName}. 0 punti.`;
+        ? tr('mg.right', { shape: answerName, launches: I18n.plural('launch', n), pts })
+        : tr('mg.wrong', { shape: answerName });
       // solo costanti, numeri e emoji: niente stringhe esterne nel testo condiviso
       const day = /^\d{4}-\d{2}-\d{2}$/.test(game.seed) ? ` ${game.seed}` : '';
-      shareText = `La forma nascosta${day}\n${ok ? '✅' : '❌'} ${n} ${n === 1 ? 'lancio' : 'lanci'} · ${pts}/100`;
+      shareText = tr('share.shape', { day, mark: ok ? '✅' : '❌', launches: I18n.plural('launch', n), pts });
+      reward.textContent = opts.onFinish ? opts.onFinish({ ok, launches: n, score: pts }) || '' : '';
       row.replaceChildren();
       if (opts.shareLabel) row.append(button(opts.shareLabel, shareBtnHandler));
-      if (opts.onNew) row.append(button('Nuova partita', () => opts.onNew()));
-      if (opts.onClose) row.append(button('Continua', () => opts.onClose({ ok, launches: n, score: pts })));
+      if (opts.onNew) row.append(button(tr('mg.new'), () => opts.onNew()));
+      if (opts.onClose) row.append(button(tr('mg.continue'), () => opts.onClose({ ok, launches: n, score: pts })));
       result.hidden = false;
       if (cancel) cancel.hidden = true;
       hint.textContent = '';
@@ -168,9 +192,9 @@
       try {
         if (navigator.share) await navigator.share({ text: shareText });
         else await navigator.clipboard.writeText(shareText);
-        btn.textContent = 'Fatto!';
+        btn.textContent = tr('share.done');
       } catch (err) {
-        btn.textContent = err && err.name === 'AbortError' ? original : 'Non riuscito';
+        btn.textContent = err && err.name === 'AbortError' ? original : tr('share.fail');
       }
       setTimeout(() => { btn.textContent = original; }, 1500);
     }
@@ -199,13 +223,14 @@
       aim = null;
       const dir = [a.cur[0] - a.entry.p[0], a.cur[1] - a.entry.p[1]];
       if (Math.hypot(dir[0], dir[1]) < MIN_DRAG || !isInward(dir, a.entry.n)) {
-        hint.textContent = 'Trascina verso l\'interno per lanciare.';
+        hint.textContent = tr('mg.hint.inward');
       } else if (launches.length >= maxLaunches) {
-        hint.textContent = 'Lanci finiti: scegli la forma.';
+        hint.textContent = tr('mg.hint.max');
       } else {
-        launches.push({ entry: a.entry.p, exit: trace(a.entry.p, dir, game.poly).exit });
+        const norm = Math.hypot(dir[0], dir[1]);
+        launches.push({ entry: a.entry.p, exit: trace(a.entry.p, dir, game.poly).exit, dir: [dir[0] / norm, dir[1] / norm] });
         setStatus();
-        hint.textContent = 'Dove è uscita? Prova un altro lancio o scegli la forma.';
+        hint.textContent = tr('mg.hint.after');
       }
       draw();
     });

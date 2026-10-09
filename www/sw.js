@@ -1,6 +1,6 @@
 // Cache-first dell'app shell. Cambia CACHE a ogni rilascio: i vecchi file vengono eliminati.
-const CACHE = 'acceleratore-v2';
-const SHELL = ['./', 'index.html', 'style.css', 'core.js', 'idle.js', 'minigame.js', 'budget.js', 'budget-ui.js', 'ui.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
+const CACHE = 'acceleratore-v6';
+const SHELL = ['./', 'index.html', 'style.css', 'i18n.js', 'i18n-game.js', 'core.js', 'processes.js', 'physics.js', 'game.js', 'minigame.js', 'budget.js', 'budget-ui.js', 'ui.js', 'svg.js', 'popups.js', 'scene.js', 'ui-physics.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

@@ -10,14 +10,14 @@
   const MAX_SCORE = 100;
 
   const ITEMS = [
-    { id: 'lumi', name: 'Luminosità', desc: 'Più collisioni, ma più pile-up e danni da radiazione' },
-    { id: 'trigger', name: 'Trigger', desc: 'Seleziona più eventi utili' },
-    { id: 'risoluzione', name: 'Risoluzione', desc: 'Rivelatore più preciso' },
-    { id: 'calibrazione', name: 'Calibrazione', desc: 'Riduce l\'errore sistematico' },
-    { id: 'calcolo', name: 'Calcolo', desc: 'Elabora il flusso di dati: se non basta, perdi eventi' },
+    { id: 'lumi' },
+    { id: 'trigger' },
+    { id: 'risoluzione' },
+    { id: 'calibrazione' },
+    { id: 'calcolo' },
   ];
 
-  const RESONANCES = ['Z′ (ipotetica)', 'X(3872)', 'Υ(3S)', 'Bosone Z', 'Bosone di Higgs', 'Quark top'];
+  const RESONANCES = ['zprime', 'x3872', 'ups3s', 'z', 'higgs', 'top']; // id: i nomi sono nel dizionario i18n
 
   const zero = () => Object.fromEntries(ITEMS.map((i) => [i.id, 0]));
 

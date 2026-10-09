@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="it">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -8,68 +8,61 @@
   <meta name="color-scheme" content="dark">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Acceleratore">
+  <meta name="apple-mobile-web-app-title" content="Accelerator">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="icon" href="icon-192.png">
   <link rel="stylesheet" href="style.css">
-  <title>Acceleratore</title>
+  <title>Accelerator</title>
 </head>
 <body>
   <header class="top">
-    <h1>Acceleratore</h1>
+    <h1 data-i18n="app.title">Accelerator</h1>
+    <button id="help" type="button" data-i18n-aria="help.aria">?</button>
+    <button id="lang" type="button" data-i18n="lang.switch">IT</button>
     <dl class="hud">
-      <div><dt>Dati</dt><dd id="dati">0</dd></div>
-      <div><dt>Produzione</dt><dd id="rate">0/s</dd></div>
-      <div><dt>Energia</dt><dd id="energy">0</dd></div>
-      <div><dt>Bonus</dt><dd id="mult">×1.00</dd></div>
+      <div><dt data-i18n="hud.funds">Funds</dt><dd id="hud-funds">0</dd></div>
+      <div><dt data-i18n="hud.year">Year</dt><dd id="hud-year">0</dd></div>
+      <div><dt data-i18n="hud.energy">Energy</dt><dd id="hud-energy">0</dd></div>
+      <div><dt data-i18n="hud.rep">Reputation</dt><dd id="hud-rep">0</dd></div>
     </dl>
     <p id="banner" role="status"></p>
   </header>
 
   <main>
-    <section id="view-machine" class="view" aria-label="Macchina">
-      <div id="upgrades"></div>
-      <button id="shutdown" class="card" type="button"></button>
-    </section>
-
-    <section id="view-discoveries" class="view" aria-label="Scoperte" hidden>
-      <div id="target" class="card">
-        <h2 id="target-name"></h2>
-        <progress id="target-bar" value="0" max="1"></progress>
-        <p id="target-info"></p>
-        <button id="confirm" type="button" hidden>Conferma scoperta</button>
-      </div>
-      <p id="all-done" hidden>Tutte le scoperte confermate. Fai un Long Shutdown per moltiplicare la produzione.</p>
-      <ul id="disc-list"></ul>
-      <p id="budget" class="muted"></p>
-    </section>
-
-    <section id="view-play" class="view" aria-label="Sfida" hidden>
-      <div id="play-host"></div>
-    </section>
-    <section id="view-budget" class="view" aria-label="Budget" hidden>
-      <p id="budget-lock" class="card">Modalità budget: si sblocca dopo il primo Long Shutdown.</p>
+    <section id="view-site" class="view" data-i18n-aria="tab.site"><div id="site-host"></div></section>
+    <section id="view-physics" class="view" data-i18n-aria="tab.physics" hidden><div id="physics-host"></div></section>
+    <section id="view-play" class="view" data-i18n-aria="tab.play" hidden><div id="play-host"></div></section>
+    <section id="view-budget" class="view" data-i18n-aria="tab.budget" hidden>
+      <p id="budget-lock" class="card" data-i18n="budget.note.locked">Budget mode: unlocks after the first Long Shutdown.</p>
       <div id="budget-host"></div>
     </section>
   </main>
 
-  <nav id="tabs" aria-label="Sezioni">
-    <button type="button" data-view="machine" aria-selected="true">Macchina</button>
-    <button type="button" data-view="discoveries" aria-selected="false">Scoperte</button>
-    <button type="button" data-view="play" aria-selected="false">Sfida</button>
-    <button type="button" data-view="budget" aria-selected="false">Budget</button>
+  <nav id="tabs" data-i18n-aria="aria.sections">
+    <button type="button" data-view="site" aria-selected="true" data-i18n="tab.site">Site</button>
+    <button type="button" data-view="physics" aria-selected="false" data-i18n="tab.physics">Physics</button>
+    <button type="button" data-view="play" aria-selected="false" data-i18n="tab.play">Challenge</button>
+    <button type="button" data-view="budget" aria-selected="false" data-i18n="tab.budget">Budget</button>
   </nav>
 
   <div id="overlay" hidden>
     <div id="overlay-body"></div>
   </div>
 
+  <script src="i18n.js"></script>
+  <script src="i18n-game.js"></script>
   <script src="core.js"></script>
-  <script src="idle.js"></script>
+  <script src="processes.js"></script>
+  <script src="physics.js"></script>
+  <script src="game.js"></script>
   <script src="minigame.js"></script>
   <script src="budget.js"></script>
   <script src="budget-ui.js"></script>
   <script src="ui.js"></script>
+  <script src="svg.js"></script>
+  <script src="popups.js"></script>
+  <script src="scene.js"></script>
+  <script src="ui-physics.js"></script>
 </body>
 </html>
