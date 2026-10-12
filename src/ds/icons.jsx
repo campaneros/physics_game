@@ -1,34 +1,46 @@
-// Icone con contorno a inchiostro, riquadro 24×24. Ogni icona è un frammento SVG: <Icon name="coin" size={22} />.
-const INK = '#04070e';
-const o = { stroke: INK, strokeWidth: 1.8, strokeLinejoin: 'round', strokeLinecap: 'round' };
-const line = (d, c = '#e6ebf5', w = 2.4) => <path d={d} fill="none" stroke={c} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round" />;
+// Glifi sci-fi minimali, riquadro 24×24: tratto neon sottile, riempimento traslucido, nessun contorno spesso.
+// Il bagliore è dato da CSS (.ds-icon). Uso: <Icon name="coin" size={22} />.
+const C = { cyan: '#38e1ff', amber: '#ffb347', green: '#4dff9a', red: '#ff4d5e', violet: '#b388ff', ice: '#e6f4ff', dim: '#6b7da3' };
+const stroke = (c, w = 1.7) => ({ stroke: c, strokeWidth: w, strokeLinecap: 'round', strokeLinejoin: 'round' });
+const Glyph = ({ d, c, w, fill = 0.16 }) => <path d={d} fill={c} fillOpacity={fill} {...stroke(c, w)} />;
+const Line = ({ d, c = C.ice, w = 1.7 }) => <path d={d} fill="none" {...stroke(c, w)} />;
+const Ring3 = ({ c }) => (
+  <>
+    <circle cx="12" cy="12" r="8.5" fill={c} fillOpacity="0.08" stroke={c} strokeWidth="2.6" strokeDasharray="11 3.6" strokeLinecap="round" />
+    <circle cx="12" cy="12" r="4.2" fill="none" stroke={c} strokeOpacity="0.55" strokeWidth="1.2" />
+    <circle cx="12" cy="12" r="1.5" fill={C.ice} />
+  </>
+);
 
 const shapes = {
-  coin: () => <><circle cx="12" cy="12" r="9.5" fill="url(#ds-g-gold)" {...o} /><circle cx="12" cy="12" r="6.2" fill="none" stroke="#8a6420" strokeWidth="1.6" /><path d="M12 7.800l2.600 4.200L12 16.200 9.400 12z" fill="#fff3c4" stroke="#8a6420" strokeWidth="1.2" strokeLinejoin="round" /></>,
-  clock: () => <><circle cx="12" cy="12" r="9.5" fill="#1c2a47" {...o} />{line('M12 6.5V12l3.8 2.2', '#38bdf8', 2.2)}</>,
-  bolt: () => <path d="M13.5 2L4.5 13.5h6L9.5 22l10-12.5h-6.4z" fill="url(#ds-g-gold)" {...o} />,
-  star: () => <path d="M12 2.5l2.9 6.2 6.8.8-5 4.7 1.3 6.7L12 17.5 6 20.900l1.300-6.700-5-4.700 6.800-.800z" fill="url(#ds-g-gold)" {...o} />,
-  wrench: () => <><path d="M15 3.5a5 5 0 0 0-4.900 6.600L3.800 16.400a2.100 2.100 0 0 0 3 3l6.300-6.300A5 5 0 0 0 19.700 8.200l-3 3-2.800-.6-.6-2.800z" fill="url(#ds-g-steel)" {...o} /></>,
-  play: () => <path d="M7 3.800l13 8.200-13 8.200z" fill="url(#ds-g-green)" {...o} />,
-  pause: () => <><rect x="5.500" y="4" width="4.500" height="16" rx="1.200" fill="url(#ds-g-steel)" {...o} /><rect x="14" y="4" width="4.500" height="16" rx="1.200" fill="url(#ds-g-steel)" {...o} /></>,
-  check: () => <><path d="M4.500 12.500l5 5L20 6.500" fill="none" stroke={INK} strokeWidth="5.200" strokeLinecap="round" strokeLinejoin="round" /><path d="M4.500 12.500l5 5L20 6.500" fill="none" stroke="#fff" strokeWidth="2.600" strokeLinecap="round" strokeLinejoin="round" /></>,
-  cross: () => <><path d="M5.500 5.500l13 13M18.500 5.500l-13 13" fill="none" stroke={INK} strokeWidth="5.200" strokeLinecap="round" /><path d="M5.500 5.500l13 13M18.500 5.500l-13 13" fill="none" stroke="#fff" strokeWidth="2.600" strokeLinecap="round" /></>,
-  lock: () => <><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke={INK} strokeWidth="4.200" strokeLinecap="round" />{line('M8 11V8a4 4 0 0 1 8 0v3', '#94a3c0', 2)}<rect x="4.500" y="10.500" width="15" height="11" rx="2.500" fill="url(#ds-g-steel)" {...o} /></>,
-  help: () => <><circle cx="12" cy="12" r="9.500" fill="url(#ds-g-blue)" {...o} />{line('M9.200 9.300a2.900 2.900 0 1 1 4.200 2.600c-.900.500-1.400 1-1.400 2', '#fff', 2.200)}<circle cx="12" cy="17.200" r="1.300" fill="#fff" /></>,
-  globe: () => <><circle cx="12" cy="12" r="9.500" fill="url(#ds-g-blue)" {...o} />{line('M2.800 12h18.400M12 2.500c3 3 3 16 0 19M12 2.500c-3 3-3 16 0 19', '#fff', 1.400)}</>,
-  ring: () => <><circle cx="12" cy="12" r="8" fill="none" stroke={INK} strokeWidth="6" /><circle cx="12" cy="12" r="8" fill="none" stroke="url(#ds-g-steel)" strokeWidth="3.200" /><circle cx="12" cy="4" r="2.600" fill="#fde047" {...o} /></>,
-  beam: () => <><path d="M2 12h20" stroke={INK} strokeWidth="6" strokeLinecap="round" /><path d="M2 12h20" stroke="#38bdf8" strokeWidth="3" strokeLinecap="round" /><circle cx="16" cy="12" r="3" fill="#fff" {...o} /></>,
-  atom: () => <><ellipse cx="12" cy="12" rx="10" ry="4" fill="none" stroke={INK} strokeWidth="3.600" /><ellipse cx="12" cy="12" rx="10" ry="4" fill="none" stroke="#38bdf8" strokeWidth="1.600" /><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)" fill="none" stroke={INK} strokeWidth="3.600" /><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)" fill="none" stroke="#a78bfa" strokeWidth="1.600" /><circle cx="12" cy="12" r="2.800" fill="url(#ds-g-gold)" {...o} /></>,
-  flask: () => <><path d="M9 3h6M10 3v6l-5.500 9.500A2 2 0 0 0 6.200 21.500h11.600a2 2 0 0 0 1.700-3L14 9V3" fill="#1c2a47" {...o} /><path d="M7.200 16h9.600l1.700 3a.9.900 0 0 1-.8 1.400H6.300a.9.900 0 0 1-.8-1.400z" fill="url(#ds-g-green)" /></>,
-  chevron: () => <path d="M9 4l8 8-8 8" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />,
-  back: () => <path d="M15 4l-8 8 8 8" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />,
-  plus: () => <path d="M12 4.500v15M4.500 12h15" fill="none" stroke="currentColor" strokeWidth="3.200" strokeLinecap="round" />,
-  close: () => <path d="M5.500 5.500l13 13M18.500 5.500l-13 13" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />,
-  tracker: () => <><circle cx="12" cy="12" r="8.500" fill="none" stroke={INK} strokeWidth="6" /><circle cx="12" cy="12" r="8.500" fill="none" stroke="#38bdf8" strokeWidth="3.200" /><circle cx="12" cy="12" r="2.300" fill="#e6ebf5" {...o} /></>,
-  ecal: () => <><circle cx="12" cy="12" r="8.500" fill="none" stroke={INK} strokeWidth="6" /><circle cx="12" cy="12" r="8.500" fill="none" stroke="#34d399" strokeWidth="3.200" /><circle cx="12" cy="12" r="2.300" fill="#e6ebf5" {...o} /></>,
-  hcal: () => <><circle cx="12" cy="12" r="8.500" fill="none" stroke={INK} strokeWidth="6" /><circle cx="12" cy="12" r="8.500" fill="none" stroke="#fb923c" strokeWidth="3.200" /><circle cx="12" cy="12" r="2.300" fill="#e6ebf5" {...o} /></>,
-  muon: () => <><circle cx="12" cy="12" r="8.500" fill="none" stroke={INK} strokeWidth="6" /><circle cx="12" cy="12" r="8.500" fill="none" stroke="#a78bfa" strokeWidth="3.200" /><circle cx="12" cy="12" r="2.300" fill="#e6ebf5" {...o} /></>,
-  daq: () => <><rect x="4" y="3" width="16" height="18" rx="2.500" fill="#1c2a47" {...o} /><circle cx="8.500" cy="8" r="1.600" fill="#4ade80" /><circle cx="8.500" cy="13" r="1.600" fill="#4ade80" />{line('M12.500 8h4.500M12.500 13h4.500M8 17.500h9', '#94a3c0', 1.600)}</>,
+  // gettone esagonale con nucleo a rombo
+  coin: () => <><Glyph d="M12 2.5l7.8 4.5v10L12 21.5 4.2 17V7z" c={C.amber} fill={0.18} /><Line d="M12 2.5v3.2M12 18.3v3.2" c={C.amber} w={1.3} /><circle cx="12" cy="12" r="3.6" fill="none" {...stroke(C.amber, 1.5)} /><path d="M12 9.6l1.8 2.4-1.8 2.4-1.8-2.4z" fill={C.ice} /></>,
+  clock: () => <><circle cx="12" cy="12" r="9" fill={C.cyan} fillOpacity="0.1" {...stroke(C.cyan)} /><Line d="M12 6.5V12l3.6 2.2" c={C.ice} /><Line d="M12 3.2v1.4M12 19.4v1.4M3.2 12h1.4M19.4 12h1.4" c={C.cyan} w={1.2} /></>,
+  bolt: () => <><Glyph d="M13.6 2.5L5 13.4h6.2l-1.1 8.1 8.9-11.5h-6.3z" c={C.amber} fill={0.22} /><Line d="M12.6 7.2l-2.9 4.2" c={C.ice} w={1.1} /></>,
+  star: () => <Glyph d="M12 2.5l2.2 7.3 7.3 2.2-7.3 2.2L12 21.5l-2.2-7.3L2.5 12l7.3-2.2z" c={C.amber} fill={0.22} />,
+  // chiave a settore con testa aperta e rivetto
+  wrench: () => <><Glyph d="M15.2 3.4a4.6 4.6 0 0 0-4.1 6.5L3.9 17.100l3 3 7.200-7.200a4.600 4.600 0 0 0 6.400-4.200l-2.900 2.900-2.700-.7-.7-2.700z" c={C.cyan} fill={0.16} /><circle cx="6.900" cy="17.100" r="1" fill={C.ice} /></>,
+  play: () => <><Glyph d="M6.500 4.200v15.600L19.500 12z" c={C.green} fill={0.2} /><Line d="M6.500 12h5" c={C.ice} w={1.1} /></>,
+  pause: () => <><Glyph d="M6 4.500h4v15H6zM14 4.500h4v15h-4z" c={C.green} fill={0.2} /></>,
+  check: () => <Line d="M4.800 12.500l4.700 4.600L19.400 7" c={C.green} w={2.4} />,
+  cross: () => <Line d="M6 6l12 12M18 6L6 18" c={C.red} w={2.4} />,
+  lock: () => <><Line d="M8 11V8a4 4 0 0 1 8 0v3" c={C.cyan} /><Glyph d="M5 11h14v9.500H5z" c={C.cyan} fill={0.18} /><circle cx="12" cy="15.700" r="1.300" fill={C.ice} /></>,
+  help: () => <><circle cx="12" cy="12" r="9" fill={C.cyan} fillOpacity="0.12" {...stroke(C.cyan)} /><Line d="M9.200 9.400a2.900 2.900 0 1 1 4.200 2.600c-.900.500-1.400 1-1.400 2" c={C.ice} /><circle cx="12" cy="17.200" r="1.100" fill={C.ice} /></>,
+  globe: () => <><circle cx="12" cy="12" r="9" fill={C.cyan} fillOpacity="0.1" {...stroke(C.cyan)} /><Line d="M3 12h18M12 3c3.200 3 3.200 15 0 18M12 3c-3.200 3-3.200 15 0 18" c={C.cyan} w={1.2} /></>,
+  ring: () => <><circle cx="12" cy="12" r="8.200" fill="none" {...stroke(C.ice, 1.6)} /><circle cx="12" cy="12" r="5.200" fill="none" {...stroke(C.cyan, 1.2)} strokeDasharray="2 2.200" /><circle cx="12" cy="3.800" r="2" fill={C.amber} /></>,
+  beam: () => <><Line d="M2.500 12h19" c={C.cyan} w={2} /><circle cx="15.500" cy="12" r="3" fill={C.ice} /></>,
+  atom: () => <><ellipse cx="12" cy="12" rx="9.500" ry="3.800" fill="none" {...stroke(C.cyan, 1.4)} /><ellipse cx="12" cy="12" rx="9.500" ry="3.800" transform="rotate(60 12 12)" fill="none" {...stroke(C.violet, 1.4)} /><ellipse cx="12" cy="12" rx="9.500" ry="3.800" transform="rotate(120 12 12)" fill="none" {...stroke(C.green, 1.4)} /><circle cx="12" cy="12" r="2.200" fill={C.amber} /></>,
+  flask: () => <><Line d="M9.200 3h5.600M10 3v6.200L4.800 18.300A2 2 0 0 0 6.500 21.300h11a2 2 0 0 0 1.700-3L14 9.200V3" c={C.green} w={1.6} /><path d="M6.700 16.500h10.600l1.300 2.200a1 1 0 0 1-.9 1.500H6.300a1 1 0 0 1-.9-1.500z" fill={C.green} fillOpacity="0.35" /></>,
+  sun: () => <><circle cx="12" cy="12" r="4.200" fill={C.amber} fillOpacity="0.25" {...stroke(C.amber)} /><Line d="M12 2.500v3M12 18.500v3M2.500 12h3M18.500 12h3M5.300 5.300l2.100 2.100M16.600 16.600l2.100 2.100M5.300 18.700l2.100-2.100M16.600 7.400l2.100-2.100" c={C.amber} w={1.4} /></>,
+  chevron: () => <path d="M9 4l8 8-8 8" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />,
+  back: () => <path d="M15 4l-8 8 8 8" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />,
+  plus: () => <path d="M12 4.500v15M4.500 12h15" fill="none" stroke="currentColor" strokeWidth="2.800" strokeLinecap="round" />,
+  close: () => <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2.600" strokeLinecap="round" />,
+  tracker: () => <Ring3 c={C.cyan} />,
+  ecal: () => <Ring3 c={C.green} />,
+  hcal: () => <Ring3 c={C.amber} />,
+  muon: () => <Ring3 c={C.violet} />,
+  daq: () => <><Glyph d="M6 6h12v12H6z" c={C.cyan} fill={0.14} /><Line d="M9 3v3M12 3v3M15 3v3M9 18v3M12 18v3M15 18v3M3 9h3M3 12h3M3 15h3M18 9h3M18 12h3M18 15h3" c={C.cyan} w={1.2} /><path d="M9.500 12h5" stroke={C.green} strokeWidth="1.600" strokeLinecap="round" /></>,
 };
 shapes.rho = shapes.atom;
 

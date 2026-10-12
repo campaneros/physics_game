@@ -1,15 +1,17 @@
-/* Scena SVG del sito e del detector: stati interattivi e animazioni. */
-.scene { display: block; width: 100%; height: auto; max-height: 62dvh; margin: 6px auto 0; background: linear-gradient(#141a45 0, #6a3c80 22%, #e0708a 33%, #3d2716 35.5%, #2a1a0f 70%, #0f0a06 100%); border: 3px solid var(--ink); border-radius: 16px; box-shadow: 0 0 0 2px var(--cern), var(--lift-lg); touch-action: manipulation; }
+/* Scena SVG del sito e del detector: cornice con vignettatura interna, stati interattivi e animazioni. */
+.scene-frame { position: relative; margin: 6px 0 0; overflow: hidden; background: #03050c; border: 2px solid #05070f; border-radius: 16px; box-shadow: 0 0 0 1.5px rgba(56, 225, 255, 0.45), 0 0 22px rgba(56, 225, 255, 0.16), var(--lift-lg); }
+.scene-frame::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.8), inset 0 0 90px rgba(3, 5, 12, 0.5); }
+.scene { display: block; width: 100%; height: auto; max-height: 62dvh; touch-action: manipulation; }
 .hit { cursor: pointer; }
+.hit:focus-visible { outline: 3px solid var(--cyan); }
 .crane { animation: sway 2.4s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 100%; }
 @keyframes sway { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
 .building { animation: pulse 1s ease-in-out infinite alternate; }
 @keyframes pulse { from { opacity: 0.4; } to { opacity: 1; } }
 .track { animation: flash 1.2s ease-out infinite; }
 @keyframes flash { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .crane, .building, .track { animation: none; } }
 .twinkle { animation: twinkle 2.6s ease-in-out infinite alternate; }
-@keyframes twinkle { from { opacity: 0.25; } to { opacity: 1; } }
+@keyframes twinkle { from { opacity: 0.2; } to { opacity: 1; } }
 .drift { animation: drift 40s linear infinite alternate; }
 .drift.slow { animation-duration: 70s; }
 @keyframes drift { from { transform: translateX(-24px); } to { transform: translateX(34px); } }
@@ -23,8 +25,12 @@
 @keyframes lift { from { transform: translateY(0); } to { transform: translateY(18px); } }
 .breathe { transform-box: fill-box; animation: breathe 2.2s ease-in-out infinite alternate; transform-origin: center; }
 @keyframes breathe { from { opacity: 0.45; } to { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .twinkle, .drift, .marchant, .pulse2, .dust, .lift, .breathe { transform-box: fill-box; animation: none; } }
 .flicker { animation: flicker 0.9s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; }
-@keyframes flicker { from { opacity: 0.7; transform: scale(0.96); } to { opacity: 1; transform: scale(1.05); } }
-@media (prefers-reduced-motion: reduce) { .flicker { animation: none; } }
-.hit:focus-visible { outline: 3px solid var(--cyan); }
+@keyframes flicker { from { opacity: 0.72; transform: scale(0.97); } to { opacity: 1; transform: scale(1.04); } }
+.blink { animation: blink 1.6s steps(2, jump-none) infinite; }
+@keyframes blink { 50% { opacity: 0.15; } }
+.aura { transform-box: fill-box; transform-origin: center; animation: aura 1.8s ease-in-out infinite alternate; }
+@keyframes aura { from { opacity: 0.55; transform: scale(0.88); } to { opacity: 1; transform: scale(1.08); } }
+.scan { animation: scan 3.4s linear infinite; }
+@keyframes scan { from { transform: translateY(0); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } to { transform: translateY(232px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .crane, .building, .track, .twinkle, .drift, .marchant, .pulse2, .dust, .lift, .breathe, .flicker, .blink, .aura, .scan { animation: none; } }

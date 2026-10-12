@@ -57,13 +57,16 @@ export const Dust = memo(function Dust({ x, y }) {
 
 export const Led = ({ cx, cy, r, on, width }) => <circle cx={cx} cy={cy} r={r} fill={on ? '#4ade80' : '#334155'} {...ink(width)} />;
 
+// Magnete dell'anello: corpo metallico scuro con striscia neon (blu per pp, verde per ee) e due ganasce ambra.
 export const Magnet = memo(function Magnet({ x, y, deg, grad }) {
+  const neon = grad === 'magBlue' ? '#38e1ff' : '#4dff9a';
   return (
     <g transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${deg.toFixed(1)})`}>
-      <rect x="-9" y="-6" width="18" height="12" rx="3" fill={`url(#${grad})`} {...ink(1.8)} />
-      <rect x="-9" y="-6" width="4" height="12" rx="1.5" fill="#e0483f" {...ink(1.2)} />
-      <rect x="5" y="-6" width="4" height="12" rx="1.5" fill="#e0483f" {...ink(1.2)} />
-      <path d="M-3-3.5H3" stroke="#fff" strokeWidth="1.4" opacity="0.6" strokeLinecap="round" />
+      <rect x="-9" y="-6" width="18" height="12" rx="3" fill="url(#metalDark)" {...ink(1.6)} />
+      <rect x="-7" y="-4.500" width="14" height="3" rx="1.500" fill={neon} opacity="0.9" />
+      <rect x="-9" y="-6" width="3" height="12" rx="1.200" fill="#ffb347" opacity="0.85" />
+      <rect x="6" y="-6" width="3" height="12" rx="1.200" fill="#ffb347" opacity="0.85" />
+      <path d="M-4 2.500H4" stroke="#fff" strokeWidth="1" opacity="0.35" strokeLinecap="round" />
     </g>
   );
 });

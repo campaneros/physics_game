@@ -2,11 +2,11 @@
 .mg { display: flex; flex-direction: column; gap: 10px; padding: 0 16px; } /* margine: evita il gesto Indietro di Android ai bordi */
 .mg p { margin: 0; }
 .mg-status { text-align: center; color: var(--muted); font-size: 0.9rem; }
-.mg-canvas { display: block; margin: 0 auto; width: min(100%, 520px, 40dvh); aspect-ratio: 1; touch-action: none; user-select: none; -webkit-user-select: none; background: var(--bg-deep); border: 3px solid var(--ink); border-radius: var(--radius); box-shadow: 0 0 0 2px var(--cern), var(--lift-lg); }
+.mg-canvas { display: block; margin: 0 auto; width: min(100%, 520px, 40dvh); aspect-ratio: 1; touch-action: none; user-select: none; -webkit-user-select: none; background: #03060d; border: 1px solid rgba(56, 225, 255, 0.45); border-radius: var(--radius); box-shadow: 0 0 18px rgba(56, 225, 255, 0.18), inset 0 0 30px rgba(0, 0, 0, 0.6); }
 .mg-hint { min-height: 1.4em; text-align: center; color: var(--text); font-size: 0.92rem; }
 .mg-legend { text-align: center; color: var(--muted); font-size: 0.8rem; }
 .mg-choices { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-.choice { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 92px; padding: 8px 4px; color: var(--text); cursor: pointer; background: linear-gradient(var(--panel-hi), var(--panel-lo)); border: var(--stroke) solid var(--ink); border-radius: var(--radius); box-shadow: var(--lift), inset 0 0 0 1.5px var(--line); }
+.choice { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 92px; padding: 8px 4px; color: var(--text); cursor: pointer; background: var(--glass); border: 1px solid rgba(120, 170, 230, 0.4); border-radius: var(--radius); box-shadow: var(--glass-edge); }
 .choice canvas { width: 56px; height: 56px; }
 .choice span { font: 700 0.85rem/1.1 var(--font-display); }
 .choice:active:not(:disabled) { transform: translateY(2px); }

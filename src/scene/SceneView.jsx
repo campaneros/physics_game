@@ -11,15 +11,20 @@ import { CX, CY, Crane, Dust, Hit, Led, ringRadius } from './parts.jsx';
 const display = (on) => (on ? 'inline' : 'none');
 const BAR_W = 316;
 
-// Area in costruzione prima dell'acceleratore: tocca il "+" per aprire il cantiere.
+// Cantiere: proiezione olografica del progetto. Dashes ambra con bagliore, griglia blueprint, scansione e "+" con alone pulsante.
 function Plot({ building }) {
+  const corner = (x, y, dx, dy) => <path d={`M${x} ${y + dy * 18}V${y}H${x + dx * 18}`} fill="none" stroke="#38e1ff" strokeWidth="2.200" strokeLinecap="round" />;
   return (
     <Hit label={tr('site.plot')} onActivate={() => Popups.construction()}>
-      <rect x="56" y="240" width="248" height="246" rx="18" fill="#2a1b10" opacity="0.55" />
-      <rect x="56" y="240" width="248" height="246" rx="18" fill="none" stroke="#fcd34d" strokeWidth="3.5" strokeDasharray="12 8" className="marchant" />
-      <g className="pulse2" display={display(!building)}>
-        <circle cx={CX} cy={CY} r="34" fill="#1c2a52" {...ink(3)} />
-        <g transform={`translate(${CX - 24} ${CY - 24}) scale(2)`}><path d="M12 4v16M4 12h16" fill="none" stroke="#e6ebf5" strokeWidth="3" strokeLinecap="round" /></g>
+      <rect x="56" y="240" width="248" height="246" rx="10" fill="#06203a" opacity="0.5" />
+      <rect x="56" y="240" width="248" height="246" rx="10" fill="url(#blueprint)" />
+      <rect x="56" y="240" width="248" height="246" rx="10" fill="none" stroke="#ffb347" strokeWidth="2.400" strokeDasharray="12 8" className="marchant" filter="url(#holoGlow)" />
+      {corner(60, 244, 1, 1)}{corner(300, 244, -1, 1)}{corner(60, 482, 1, -1)}{corner(300, 482, -1, -1)}
+      <g className="scan" pointerEvents="none"><rect x="62" y="246" width="236" height="2" fill="#38e1ff" opacity="0.7" filter="url(#glow)" /></g>
+      <g display={display(!building)}>
+        <circle cx={CX} cy={CY} r="62" fill="url(#aura)" className="aura" />
+        <circle cx={CX} cy={CY} r="34" fill="#061a30" stroke="#38e1ff" strokeWidth="2" filter="url(#holoGlow)" />
+        <path d={`M${CX} ${CY - 15}v30M${CX - 15} ${CY}h30`} fill="none" stroke="#e6f9ff" strokeWidth="4" strokeLinecap="round" filter="url(#glow)" />
       </g>
       <rect x="56" y="240" width="248" height="246" fill="transparent" />
     </Hit>
@@ -44,6 +49,7 @@ export function SceneView() {
   const prog = s.shutdown ? (s.t - s.shutdown.start) / (s.shutdown.until - s.shutdown.start) : s.run ? (s.t - s.run.start) / (s.run.end - s.run.start) : 0;
   const craneAt = s.built ? [CX - 56, ipY + 58] : [CX - 40, CY + 40];
   return (
+    <div className="scene-frame">
     <svg viewBox={`0 0 ${W} ${H}`} className="scene" role="group" aria-label={tr('tab.site')}>
       <SceneDefs />
       <g display={display(view === 'site')}>
@@ -67,5 +73,6 @@ export function SceneView() {
       </g>
       <Detector s={s} shown={view === 'det'} running={running} building={building} program={program} onBack={() => setView('site')} />
     </svg>
+    </div>
   );
 }

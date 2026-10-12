@@ -43,6 +43,8 @@ function Tunnel({ rad, n, mag, lumiLvl, onProjects }) {
   }
   return (
     <Hit label={tr('site.ring')} onActivate={onProjects}>
+      <circle cx={CX} cy={CY} r={rad} fill="none" stroke="#38e1ff" strokeOpacity="0.07" strokeWidth="34" />
+      <circle cx={CX} cy={CY} r={rad} fill="none" stroke="#38e1ff" strokeOpacity="0.14" strokeWidth="27" />
       <circle cx={CX} cy={CY} r={rad} fill="none" stroke={INK} strokeWidth="22" />
       <circle cx={CX} cy={CY} r={rad} fill="none" stroke="url(#tube)" strokeWidth="16" />
       <circle cx={CX} cy={CY} r={rad - 3} fill="none" stroke="#fff" strokeWidth="1.6" opacity="0.35" />
@@ -64,9 +66,12 @@ export const Ring = memo(function Ring({ energyLvl, lumiLvl, collider, muon, hca
         <rect x={CX - 5} y={GROUND + 14} width="10" height="12" fill="#facc15" {...ink(1.6)} className="lift" />
       </g>
       <g pointerEvents="none">
-        <rect x={CX - 26} y={GROUND - 30} width="52" height="34" fill="url(#wall)" {...ink(2.4)} />
-        <path d={`M${CX - 32} ${GROUND - 28}L${CX} ${GROUND - 48}L${CX + 32} ${GROUND - 28}z`} fill="url(#roof)" {...ink(2.4)} />
-        <rect x={CX - 8} y={GROUND - 16} width="16" height="20" fill="#1f2a44" {...ink(1.8)} />
+        <path d={`M${CX - 28} ${GROUND + 4}V${GROUND - 20}L${CX - 22} ${GROUND - 28}H${CX + 22}L${CX + 28} ${GROUND - 20}V${GROUND + 4}z`} fill="url(#metal)" {...ink(2)} />
+        <path d={`M${CX - 22} ${GROUND - 28}L${CX - 16} ${GROUND - 38}H${CX + 16}L${CX + 22} ${GROUND - 28}z`} fill="url(#roof)" {...ink(1.8)} />
+        {[0, 1, 2].map((i) => <path key={i} d={`M${CX - 28} ${GROUND - 14 + i * 7}H${CX + 28}`} stroke="#05070f" strokeWidth="0.8" opacity="0.6" />)}
+        <rect x={CX - 18} y={GROUND - 22} width="36" height="3.600" rx="1.400" fill="url(#slit)" filter="url(#glow)" />
+        <rect x={CX - 7} y={GROUND - 10} width="14" height="14" rx="2" fill="#0a1020" stroke="#05070f" strokeWidth="1.400" />
+        <path d={`M${CX + 12} ${GROUND - 38}V${GROUND - 52}`} stroke="#9aa7c0" strokeWidth="1.600" /><circle cx={CX + 12} cy={GROUND - 53} r="2" fill="#ff3b4e" className="blink" />
       </g>
       <Hit label={tr('site.ip')} onActivate={onDetector}>
         <rect x={CX - 40} y={ipY - 32} width="80" height="64" rx="12" fill="#0f1630" {...ink(2.8)} />

@@ -1,8 +1,9 @@
-// Pittura statica della scena in SVG: gradienti, contorni scuri, luci. Nessuna logica di gioco: i componenti sono memoizzati
-// perché non dipendono dallo stato (si ridisegnano solo al primo montaggio).
+// Pittura statica della scena in SVG: atmosfera dark sci-fi (cielo viola-rosa, montagne a più piani con nebbia, bunker di ricerca,
+// sottosuolo a strati con fessure, cristalli e torce). Nessuna logica di gioco: i componenti sono memoizzati e si montano una volta.
+// Niente filtri di rumore (feTurbulence): le texture sono pattern statici, leggeri da ridisegnare su telefono.
 import { memo } from 'react';
 
-export const INK = '#0a0f1e';
+export const INK = '#05070f';
 export const W = 360;
 export const H = 540;
 export const GROUND = 190;
@@ -23,135 +24,208 @@ const Rad = ({ id, stops, cx = 0.5, cy = 0.5, r = 0.5 }) => (
 export const SceneDefs = memo(function SceneDefs() {
   return (
     <defs>
-      <Lin id="sky" stops={[[0, '#141a45'], [0.45, '#4a3a8c'], [0.8, '#e0708a'], [1, '#fbbf77']]} />
-      <Rad id="sunGlow" stops={[[0, '#fff3c4', 0.95], [0.35, '#fcd34d', 0.5], [1, '#fb923c', 0]]} />
-      <Lin id="mtnFar" stops={[[0, '#8b7fc9'], [1, '#4c3f86']]} />
-      <Lin id="mtnNear" stops={[[0, '#3f3a78'], [1, '#231f4d']]} />
-      <Lin id="grass" stops={[[0, '#5fbf4a'], [1, '#2a7a3a']]} />
-      <Lin id="soil" stops={[[0, '#5a3b22'], [0.5, '#3d2716'], [1, '#1d120b']]} />
-      <Lin id="rock" stops={[[0, '#8a6b4a'], [1, '#4a3322']]} />
-      <Lin id="tube" stops={[[0, '#cfd8e6'], [0.45, '#8693a8'], [1, '#3b4660']]} />
-      <Lin id="magBlue" stops={[[0, '#7dd3fc'], [0.5, '#2f7fd1'], [1, '#17386e']]} />
-      <Lin id="magGreen" stops={[[0, '#86efac'], [0.5, '#22a05a'], [1, '#0f4a2c']]} />
-      <Lin id="gold" stops={[[0, '#fde68a'], [1, '#b7791f']]} />
-      <Lin id="wall" stops={[[0, '#dfe6f1'], [1, '#8d9bb3']]} />
-      <Lin id="roof" stops={[[0, '#e0483f'], [1, '#8f1d1d']]} />
-      <Lin id="steel" stops={[[0, '#5b6b88'], [1, '#222c44']]} />
-      <Lin id="muonA" stops={[[0, '#b9a6ff'], [1, '#6a4fd1']]} />
-      <Lin id="muonB" stops={[[0, '#7d89a3'], [1, '#3a4560']]} />
-      <Lin id="hcalG" stops={[[0, '#fdba74'], [1, '#c2570c']]} />
-      <Lin id="ecalG" stops={[[0, '#86efc0'], [1, '#12915c']]} />
-      <Lin id="trkG" stops={[[0, '#7dd3fc'], [1, '#1e6fb8']]} />
-      <Rad id="cavern" stops={[[0, '#2a3358'], [0.6, '#131a33'], [1, '#05070f']]} cy={0.45} r={0.75} />
-      <pattern id="bricks" width="36" height="18" patternUnits="userSpaceOnUse">
-        <rect width="36" height="18" fill="none" />
-        <path d="M0 .5H36M0 9.5H36M.5 0V9M18.5 9V18" stroke="#0a0604" strokeWidth="1.4" fill="none" opacity="0.55" />
-        <path d="M2 2H16M20 11H34" stroke="#c9a070" strokeWidth="1" opacity="0.14" />
+      {/* cielo: blu notte → viola cosmico → rosa/arancio all'orizzonte */}
+      <Lin id="sky" stops={[[0, '#030617'], [0.22, '#0b1140'], [0.45, '#2b1470'], [0.68, '#7a2a95'], [0.85, '#d8407f'], [1, '#ff9a52']]} />
+      <Rad id="sunGlow" stops={[[0, '#fff0c8', 1], [0.2, '#ffc27a', 0.75], [0.5, '#ff6f61', 0.32], [1, '#c02a8a', 0]]} />
+      <Lin id="haze" stops={[[0, '#ff7a5c', 0], [0.7, '#ff8a5c', 0.35], [1, '#ffb070', 0.55]]} />
+      <Lin id="fogFar" stops={[[0, '#7a3fa8', 0], [1, '#a04aa6', 0.6]]} />
+      <Lin id="mtnFar" stops={[[0, '#7c58b8'], [1, '#a05aa8']]} />
+      <Lin id="mtnMid" stops={[[0, '#3a2a86'], [1, '#2a1d63']]} />
+      <Lin id="mtnNear" stops={[[0, '#1b1450'], [1, '#0d0a2c']]} />
+      <Lin id="snow" stops={[[0, '#ffffff'], [1, '#cdbdf2']]} />
+      <Lin id="terrain" stops={[[0, '#1d2f3f'], [1, '#0b121c']]} />
+      {/* sottosuolo: marrone terroso → ardesia → antracite */}
+      <Lin id="soil" stops={[[0, '#5a3d27'], [0.2, '#463125'], [0.5, '#2c2629'], [0.78, '#1a1d29'], [1, '#0b0e17']]} />
+      <Lin id="strataA" stops={[[0, '#7a5638', 0.5], [1, '#4a3322', 0.2]]} />
+      <Lin id="strataB" stops={[[0, '#1a1c28', 0.55], [1, '#2a2530', 0.15]]} />
+      <Lin id="rock" stops={[[0, '#9a7a58'], [1, '#4a3a30']]} />
+      <Lin id="rockCold" stops={[[0, '#7e8aa8'], [1, '#2c3348']]} />
+      <Lin id="tube" stops={[[0, '#dbe5f2'], [0.45, '#8693a8'], [1, '#2f3a54']]} />
+      <Lin id="magBlue" stops={[[0, '#9be4ff'], [0.5, '#2f84d8'], [1, '#12306a']]} />
+      <Lin id="magGreen" stops={[[0, '#9bffc8'], [0.5, '#22a866'], [1, '#0c4a2e']]} />
+      <Lin id="gold" stops={[[0, '#ffe9a0'], [1, '#b7791f']]} />
+      <Lin id="metal" stops={[[0, '#8a97b0'], [0.35, '#4c586f'], [1, '#1f2638']]} />
+      <Lin id="metalDark" stops={[[0, '#566178'], [1, '#161c2c']]} />
+      <Lin id="wall" stops={[[0, '#9aa7c0'], [1, '#4d5872']]} />
+      <Lin id="roof" stops={[[0, '#3a4660'], [1, '#161c2e']]} />
+      <Lin id="steel" stops={[[0, '#667592'], [1, '#1c2438']]} />
+      <Lin id="muonA" stops={[[0, '#c9b8ff'], [1, '#6a4fd1']]} />
+      <Lin id="muonB" stops={[[0, '#8a96b3'], [1, '#38425e']]} />
+      <Lin id="hcalG" stops={[[0, '#ffc888'], [1, '#c2570c']]} />
+      <Lin id="ecalG" stops={[[0, '#9bf5cc'], [1, '#0f9460']]} />
+      <Lin id="trkG" stops={[[0, '#8fe0ff'], [1, '#1e72c0']]} />
+      <Rad id="cavern" stops={[[0, '#232c52'], [0.55, '#0f1530'], [1, '#03050c']]} cy={0.45} r={0.75} />
+      {/* texture statiche */}
+      <pattern id="plates" width="48" height="26" patternUnits="userSpaceOnUse">
+        <path d="M0 .5H48M0 13.5H48M.5 0V13M24.5 13V26" stroke="#000" strokeWidth="1" fill="none" opacity="0.28" />
+        <path d="M2 2.5H22M26 15.500H46" stroke="#fff" strokeWidth="0.8" opacity="0.06" />
       </pattern>
-      <Rad id="torch" stops={[[0, '#ffd27a', 0.55], [0.5, '#f97316', 0.18], [1, '#f97316', 0]]} />
-      <Rad id="crys" stops={[[0, '#b6ffcf', 0.9], [0.4, '#22c55e', 0.35], [1, '#22c55e', 0]]} />
+      <pattern id="speckle" width="40" height="40" patternUnits="userSpaceOnUse">
+        <circle cx="6" cy="8" r="1.100" fill="#000" opacity="0.35" /><circle cx="27" cy="5" r="0.8" fill="#fff" opacity="0.1" />
+        <circle cx="16" cy="22" r="1.300" fill="#000" opacity="0.28" /><circle cx="34" cy="28" r="0.9" fill="#fff" opacity="0.08" />
+        <circle cx="9" cy="35" r="0.8" fill="#fff" opacity="0.1" /><circle cx="30" cy="16" r="1" fill="#000" opacity="0.3" />
+      </pattern>
+      <pattern id="blueprint" width="20" height="20" patternUnits="userSpaceOnUse">
+        <path d="M20 0H0V20" fill="none" stroke="#38e1ff" strokeWidth="0.6" opacity="0.22" />
+      </pattern>
+      {/* luci */}
+      <Rad id="torchLight" stops={[[0, '#ffb86a', 0.7], [0.3, '#ff7a28', 0.34], [0.65, '#c2410c', 0.12], [1, '#7a2a08', 0]]} />
+      <Rad id="torchCore" stops={[[0, '#fff0b0', 0.95], [0.5, '#ffb040', 0.4], [1, '#ff7a20', 0]]} />
+      <Rad id="crysCyan" stops={[[0, '#a8f4ff', 0.9], [0.4, '#22d3ee', 0.35], [1, '#22d3ee', 0]]} />
+      <Rad id="crysMagenta" stops={[[0, '#ffc2f5', 0.9], [0.4, '#e83fd0', 0.35], [1, '#e83fd0', 0]]} />
+      <Rad id="crysGreen" stops={[[0, '#b6ffcf', 0.9], [0.4, '#22c55e', 0.35], [1, '#22c55e', 0]]} />
       <Rad id="ipGlow" stops={[[0, '#ffffff', 1], [0.3, '#fde68a', 0.7], [1, '#f59e0b', 0]]} />
-      <Rad id="vig" stops={[[0.55, '#000', 0], [1, '#000', 0.55]]} r={0.75} />
+      <Rad id="aura" stops={[[0, '#38e1ff', 0.7], [0.5, '#38e1ff', 0.22], [1, '#38e1ff', 0]]} />
+      <Rad id="vig" stops={[[0.5, '#000', 0], [1, '#000', 0.7]]} r={0.78} />
       <Lin id="beam" stops={[[0, '#fde68a', 0], [0.5, '#fff7d6', 1], [1, '#fde68a', 0]]} dir="h" />
-      <Lin id="cone" stops={[[0, '#fff3c4', 0.5], [1, '#fff3c4', 0]]} />
+      <Lin id="cone" stops={[[0, '#c8e8ff', 0.5], [1, '#c8e8ff', 0]]} />
+      <Lin id="slit" stops={[[0, '#c8fbff'], [1, '#22c3e6']]} />
       <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
         <feGaussianBlur stdDeviation="3" result="b" />
         <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+      </filter>
+      <filter id="holoGlow" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="2.4" result="b" />
+        <feMerge><feMergeNode in="b" /><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
       </filter>
     </defs>
   );
 });
 
-const Tree = ({ x, y, k = 1 }) => (
+// --- superficie ---------------------------------------------------------------
+
+const STARS = [[18, 14], [46, 40], [74, 20], [102, 58], [130, 12], [152, 34], [186, 18], [214, 46], [246, 14], [270, 34], [298, 20], [326, 52], [344, 12], [60, 76], [112, 84], [172, 70], [232, 76], [312, 82], [28, 96], [284, 98]];
+
+const Pine = ({ x, y, k = 1 }) => (
   <g transform={`translate(${x} ${y}) scale(${k})`}>
-    <rect x="-3" y="-14" width="6" height="16" fill="#6b4423" {...ink(2)} />
-    <circle cx="0" cy="-26" r="15" fill="#2f8f46" {...ink(2.2)} />
-    <circle cx="-7" cy="-22" r="9" fill="#46b35a" />
-    <circle cx="5" cy="-32" r="6" fill="#6fd17c" opacity="0.8" />
+    <path d="M0 -34L9 -14H4L12 -2H-12L-4 -14H-9z" fill="#0c1a24" stroke="#1d4a5a" strokeWidth="1" strokeLinejoin="round" />
+    <path d="M0 -34L3 -14M0 -34L-3 -14" stroke="#38e1ff" strokeWidth="0.7" opacity="0.35" />
   </g>
 );
 
-const Cloud = ({ x, y, k, op }) => (
-  <g transform={`translate(${x} ${y}) scale(${k})`} opacity={op}>
-    <path d="M-34 8C-46 8-46-8-32-8C-30-24-6-26 0-12C12-22 34-14 30 4C44 4 44 14 30 14H-30C-34 14-34 8-34 8z" fill="#fbe9f2" {...ink(2)} />
-    <path d="M-26 8H26" stroke="#e3b8d6" strokeWidth="4" strokeLinecap="round" />
-  </g>
-);
-
-const STARS = [[30, 22], [70, 50], [120, 16], [160, 40], [210, 20], [250, 52], [300, 26], [340, 60], [95, 78], [330, 14]];
-
-// Cielo, montagne, prato: parte alta della scena.
+// Cielo, tre piani di montagne con nebbia d'aria e snow cap, terreno scuro con bordo neon.
 export const Skyland = memo(function Skyland() {
   return (
     <g>
       <rect width={W} height={GROUND + 10} fill="url(#sky)" />
-      {STARS.map(([x, y], i) => <circle key={x} cx={x} cy={y} r={i % 3 ? 1.1 : 1.7} fill="#fff" className="twinkle" style={{ animationDelay: `${(i * 0.37).toFixed(2)}s` }} />)}
-      <circle cx="262" cy="128" r="74" fill="url(#sunGlow)" />
-      <circle cx="262" cy="128" r="20" fill="#fff1b8" {...ink(2)} />
-      <path d="M0 150L38 96L58 118L92 70L128 120L150 104L196 150L240 112L276 140L318 90L360 134V190H0z" fill="url(#mtnFar)" {...ink(2.2)} />
-      <path d="M82 82L92 70L102 84L96 80L92 86zM308 100L318 90L330 106L322 100L316 106z" fill="#f5eefc" opacity="0.9" />
-      <path d="M0 168C40 142 90 146 130 164C170 150 220 146 262 162C300 150 330 152 360 166V196H0z" fill="url(#mtnNear)" {...ink(2.2)} />
-      <g className="drift"><Cloud x={70} y={52} k={0.8} op={0.9} /></g>
-      <g className="drift slow"><Cloud x={240} y={34} k={0.55} op={0.75} /></g>
-      <path d={`M0 ${GROUND - 4}C60 ${GROUND - 12} 120 ${GROUND + 2} 190 ${GROUND - 6}C250 ${GROUND - 14} 310 ${GROUND} 360 ${GROUND - 8}V${GROUND + 10}H0z`} fill="url(#grass)" {...ink(2.4)} />
-      {Array.from({ length: 16 }, (_, i) => {
-        const x = 8 + i * 22.5;
-        return <path key={i} d={`M${x} ${GROUND + 6}l2-7l2 7M${x + 5} ${GROUND + 7}l2-6l2 6`} stroke="#2a7a3a" strokeWidth="1.6" fill="none" strokeLinecap="round" />;
-      })}
-      <Tree x={112} y={GROUND + 2} k={0.9} /><Tree x={138} y={GROUND + 4} k={0.7} /><Tree x={222} y={GROUND + 2} k={0.8} /><Tree x={345} y={GROUND + 4} k={0.75} />
+      {STARS.map(([x, y], i) => <circle key={x} cx={x} cy={y} r={i % 4 ? 0.9 : 1.6} fill={i % 3 ? '#fff' : '#bfe6ff'} className="twinkle" style={{ animationDelay: `${(i * 0.31).toFixed(2)}s` }} />)}
+      <circle cx="256" cy="146" r="112" fill="url(#sunGlow)" />
+      <circle cx="256" cy="146" r="19" fill="#fff4d0" />
+      {/* sfondo: lontano, sbiadito dalla nebbia */}
+      <path d="M0 150L34 108L50 124L88 78L124 126L152 108L200 150L238 120L274 142L318 96L360 140V196H0z" fill="url(#mtnFar)" />
+      <path d="M80 86L88 78L97 90L90 86zM310 106L318 96L328 110L320 106z" fill="url(#snow)" opacity="0.85" />
+      <rect y="92" width={W} height="104" fill="url(#fogFar)" />
+      {/* piano medio */}
+      <path d="M0 168L40 128L62 146L104 108L146 150L176 134L226 168L262 140L306 162L340 130L360 148V196H0z" fill="url(#mtnMid)" />
+      <path d="M96 118L104 108L113 121L106 117zM332 138L340 130L349 143L342 139z" fill="url(#snow)" opacity="0.7" />
+      <path d="M0 168L40 128L62 146L104 108L146 150L176 134L226 168L262 140L306 162L340 130L360 148" fill="none" stroke="#d86fd0" strokeWidth="1" opacity="0.4" />
+      <rect y="140" width={W} height="56" fill="url(#haze)" />
+      {/* primo piano: creste scure con luce di bordo */}
+      <path d="M0 176C40 154 86 158 128 172C170 158 220 154 262 170C300 158 332 160 360 172V200H0z" fill="url(#mtnNear)" />
+      <path d="M0 176C40 154 86 158 128 172C170 158 220 154 262 170C300 158 332 160 360 172" fill="none" stroke="#ff8ad0" strokeWidth="1.2" opacity="0.45" />
+      <g className="drift"><path d="M40 62q14-9 30-3q10-7 26 1q-8 6-24 5q-14 7-32-3z" fill="#e69ad8" opacity="0.28" /></g>
+      <g className="drift slow"><path d="M220 38q14-9 30-3q10-7 26 1q-8 6-24 5q-14 7-32-3z" fill="#ffb4a0" opacity="0.22" /></g>
+      {/* terreno */}
+      <path d={`M0 ${GROUND - 4}C60 ${GROUND - 10} 120 ${GROUND + 1} 190 ${GROUND - 5}C250 ${GROUND - 11} 310 ${GROUND} 360 ${GROUND - 6}V${GROUND + 10}H0z`} fill="url(#terrain)" />
+      <path d={`M0 ${GROUND - 4}C60 ${GROUND - 10} 120 ${GROUND + 1} 190 ${GROUND - 5}C250 ${GROUND - 11} 310 ${GROUND} 360 ${GROUND - 6}`} fill="none" stroke="#38e1ff" strokeWidth="1.2" opacity="0.55" filter="url(#glow)" />
+      <Pine x={112} y={GROUND + 2} k={0.9} /><Pine x={134} y={GROUND + 4} k={0.65} /><Pine x={218} y={GROUND + 2} k={0.8} /><Pine x={346} y={GROUND + 4} k={0.7} />
     </g>
   );
 });
 
-const ROCKS = [[34, 262, 12, 8], [320, 300, 14, 9], [52, 430, 10, 7], [300, 470, 13, 8], [24, 358, 8, 6], [338, 396, 9, 6], [90, 506, 12, 7]];
-const CRYSTALS = [[44, 484, 1], [318, 500, 1.2], [200, 524, 0.8]];
+// --- sottosuolo ----------------------------------------------------------------
 
-// Sottosuolo: strati, rocce, fossile, torce e cristalli.
+const ROCKS = [[34, 262, 13, 9], [320, 300, 15, 10], [52, 430, 11, 7], [300, 470, 14, 9], [24, 358, 9, 6], [338, 396, 10, 7], [90, 506, 13, 8]];
+const SHARDS = [
+  { x: 44, y: 484, k: 1, glow: 'crysCyan', fill: '#5fe9ff' },
+  { x: 318, y: 500, k: 1.2, glow: 'crysMagenta', fill: '#ff6fe0' },
+  { x: 200, y: 524, k: 0.8, glow: 'crysGreen', fill: '#4dff9a' },
+  { x: 332, y: 262, k: 0.6, glow: 'crysCyan', fill: '#5fe9ff' },
+  { x: 22, y: 330, k: 0.55, glow: 'crysMagenta', fill: '#ff6fe0' },
+];
+const FISSURES = [[0, 238, 130], [226, 246, 134], [0, 318, 90], [260, 330, 100], [30, 410, 120], [210, 428, 150], [0, 492, 110], [250, 512, 110]];
+
+const Shard = ({ x, y, k, glow, fill }) => (
+  <g transform={`translate(${x} ${y}) scale(${k})`} pointerEvents="none">
+    <circle r="34" cy="-12" fill={`url(#${glow})`} className="breathe" />
+    <path d="M-11 0L-6-21L-1 0zM-2 0L4-31L11 0zM8 0L14-17L19 0z" fill={fill} fillOpacity="0.85" stroke="#fff" strokeOpacity="0.6" strokeWidth="0.8" strokeLinejoin="round" />
+    <path d="M4-31L7-12L2-2z" fill="#fff" opacity="0.55" />
+  </g>
+);
+
+const Torch = ({ x, y }) => (
+  <g pointerEvents="none">
+    <circle cx={x} cy={y} r="120" fill="url(#torchLight)" className="flicker" />
+    <circle cx={x} cy={y - 8} r="34" fill="url(#torchCore)" className="flicker" />
+    <path d={`M${x - 5} ${y + 18}L${x - 2} ${y + 2}H${x + 2}L${x + 5} ${y + 18}z`} fill="url(#metalDark)" stroke="#05070f" strokeWidth="1.2" strokeLinejoin="round" />
+    <path d={`M${x} ${y - 18}C${x + 9} ${y - 7} ${x + 7} ${y + 1} ${x} ${y + 3}C${x - 7} ${y + 1} ${x - 9} ${y - 7} ${x} ${y - 18}z`} fill="#ff8a1e" className="flicker" />
+    <path d={`M${x} ${y - 11}C${x + 4} ${y - 5} ${x + 3} ${y} ${x} ${y + 1}C${x - 3} ${y} ${x - 4} ${y - 5} ${x} ${y - 11}z`} fill="#ffe27a" className="flicker" />
+  </g>
+);
+
+// Sottosuolo a strati: gradiente terra → ardesia, bande ondulate, fessure, rocce angolari, cristalli e torce.
 export const Underground = memo(function Underground() {
   const top = GROUND + 4;
   return (
     <g>
-      <rect x="0" y={top} width={W} height={H - top} fill="url(#soil)" {...ink(2)} />
-      {Array.from({ length: 6 }, (_, i) => {
-        const y = GROUND + 44 + i * 58;
-        return <path key={i} d={`M0 ${y}C70 ${y - 12} 140 ${y + 12} 220 ${y - 4}C280 ${y - 14} 330 ${y + 6} 360 ${y}V${y + 16}C320 ${y + 22} 270 ${y + 6} 210 ${y + 14}C140 ${y + 24} 70 ${y + 4} 0 ${y + 14}z`} fill={i % 2 ? '#52361f' : '#6b4a2c'} opacity="0.45" />;
+      <rect x="0" y={top} width={W} height={H - top} fill="url(#soil)" />
+      {Array.from({ length: 7 }, (_, i) => {
+        const y = GROUND + 36 + i * 50;
+        return <path key={i} d={`M0 ${y}C70 ${y - 12} 140 ${y + 12} 220 ${y - 4}C280 ${y - 14} 330 ${y + 6} 360 ${y}V${y + 18}C320 ${y + 24} 270 ${y + 8} 210 ${y + 16}C140 ${y + 26} 70 ${y + 6} 0 ${y + 16}z`} fill={i % 2 ? 'url(#strataB)' : 'url(#strataA)'} />;
       })}
-      {ROCKS.map(([x, y, rx, ry]) => (
-        <g key={`${x}${y}`}>
-          <ellipse cx={x} cy={y} rx={rx} ry={ry} fill="url(#rock)" {...ink(2)} />
-          <ellipse cx={x - rx * 0.3} cy={y - ry * 0.3} rx={rx * 0.35} ry={ry * 0.3} fill="#c2a07c" opacity="0.6" />
+      {FISSURES.map(([x, y, len], i) => (
+        <g key={i} fill="none" strokeLinecap="round" strokeLinejoin="round">
+          <path d={`M${x} ${y}l${len * 0.25} 5l${len * 0.2} -4l${len * 0.3} 6l${len * 0.25} -3`} stroke="#02030a" strokeWidth="2" opacity="0.7" />
+          <path d={`M${x} ${y + 2.500}l${len * 0.25} 5l${len * 0.2} -4l${len * 0.3} 6l${len * 0.25} -3`} stroke="#c9a070" strokeWidth="0.7" opacity="0.14" />
         </g>
       ))}
-      <g transform="translate(316 238)"><path d="M0 0a10 10 0 1 1 7 9a6 6 0 1 1-5-6a3 3 0 1 1-2 3" fill="none" stroke="#d9c3a0" strokeWidth="3" strokeLinecap="round" opacity="0.8" /></g>
-      <rect x="0" y={top} width={W} height={H - top} fill="url(#bricks)" opacity="0.6" pointerEvents="none" />
-      {[[30, 230], [330, 230]].map(([x, y]) => (
-        <g key={x} pointerEvents="none">
-          <circle cx={x} cy={y} r="62" fill="url(#torch)" className="flicker" />
-          <rect x={x - 3} y={y} width="6" height="16" fill="#5b3b22" {...ink(1.8)} />
-          <path d={`M${x} ${y - 14}C${x + 9} ${y - 4} ${x + 6} ${y + 2} ${x} ${y + 3}C${x - 6} ${y + 2} ${x - 9} ${y - 4} ${x} ${y - 14}z`} fill="#fbbf24" {...ink(1.8)} className="flicker" />
+      <rect x="0" y={top} width={W} height={H - top} fill="url(#speckle)" pointerEvents="none" />
+      <rect x="0" y={top} width={W} height={H - top} fill="url(#plates)" opacity="0.7" pointerEvents="none" />
+      {ROCKS.map(([x, y, rx, ry], i) => (
+        <g key={`${x}${y}`} opacity="0.72">
+          <path d={`M${x - rx} ${y + ry * 0.4}L${x - rx * 0.5} ${y - ry}L${x + rx * 0.6} ${y - ry * 0.8}L${x + rx} ${y + ry * 0.2}L${x + rx * 0.3} ${y + ry}z`} fill={i % 2 ? 'url(#rockCold)' : 'url(#rock)'} stroke="#05070f" strokeWidth="1.4" strokeLinejoin="round" />
+          <path d={`M${x - rx * 0.5} ${y - ry}L${x + rx * 0.6} ${y - ry * 0.8}L${x + rx * 0.1} ${y - ry * 0.1}z`} fill="#fff" opacity="0.13" />
         </g>
       ))}
-      {CRYSTALS.map(([x, y, k]) => (
-        <g key={x} transform={`translate(${x} ${y}) scale(${k})`} pointerEvents="none">
-          <circle r="30" cy="-12" fill="url(#crys)" className="breathe" />
-          <path d="M-10 0L-6-20L-1 0zM-2 0L4-30L11 0zM8 0L14-16L18 0z" fill="#4ade80" {...ink(1.8)} />
-          <path d="M4-30L6-12L2-2z" fill="#d9ffe6" opacity="0.7" />
-        </g>
-      ))}
-      <path d={`M20 ${GROUND + 8}C14 ${GROUND + 30} 30 ${GROUND + 44} 22 ${GROUND + 70}M24 ${GROUND + 28}l12 8`} stroke="#7a5532" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <g transform="translate(316 238)" opacity="0.55"><path d="M0 0a10 10 0 1 1 7 9a6 6 0 1 1-5-6a3 3 0 1 1-2 3" fill="none" stroke="#d9c3a0" strokeWidth="2.600" strokeLinecap="round" /></g>
+      {SHARDS.map((s) => <Shard key={`${s.x}${s.y}`} {...s} />)}
+      <Torch x={30} y={230} />
+      <Torch x={330} y={230} />
     </g>
   );
 });
 
+// --- edifici: moduli di ricerca corazzati ---------------------------------------
+
+const Dish = ({ x, y, k = 1, rot = -25 }) => (
+  <g transform={`translate(${x} ${y}) rotate(${rot}) scale(${k})`}>
+    <path d="M-9 0A9 9 0 0 0 9 0z" fill="url(#metal)" stroke="#05070f" strokeWidth="1.4" strokeLinejoin="round" />
+    <path d="M0 0V-9" stroke="#9aa7c0" strokeWidth="1.2" />
+    <circle cx="0" cy="-10" r="1.6" fill="#38e1ff" />
+  </g>
+);
+
+const Plating = ({ x, y, w, h, step = 8 }) => (
+  <g pointerEvents="none">
+    {Array.from({ length: Math.floor(h / step) }, (_, i) => <path key={i} d={`M${x} ${y + (i + 1) * step}H${x + w}`} stroke="#05070f" strokeWidth="0.9" opacity="0.6" />)}
+    {Array.from({ length: Math.floor(h / step) }, (_, i) => <path key={`l${i}`} d={`M${x} ${y + (i + 1) * step + 1}H${x + w}`} stroke="#c8d6f0" strokeWidth="0.5" opacity="0.18" />)}
+  </g>
+);
+
+const Slit = ({ x, y, w }) => <rect x={x} y={y} width={w} height="3.600" rx="1.400" fill="url(#slit)" filter="url(#glow)" />;
+
 export const ControlRoom = memo(function ControlRoom() {
   return (
     <>
-      <rect x="20" y="124" width="70" height="54" fill="url(#wall)" {...ink(2.4)} />
-      <path d="M12 126L55 92L98 126z" fill="url(#roof)" {...ink(2.4)} />
-      <rect x="70" y="98" width="10" height="20" fill="#8d9bb3" {...ink(2)} />
-      <rect x="32" y="140" width="16" height="16" fill="#fcd34d" {...ink(2)} /><rect x="60" y="140" width="16" height="16" fill="#fcd34d" {...ink(2)} />
-      <rect x="32" y="140" width="16" height="16" fill="url(#cone)" opacity="0.6" />
-      <rect x="46" y="160" width="14" height="18" fill="#5b3b22" {...ink(2)} />
+      <path d="M14 182V132L24 122H86L98 132V182z" fill="url(#metal)" stroke="#05070f" strokeWidth="2.200" strokeLinejoin="round" />
+      <path d="M24 122L34 112H78L86 122z" fill="url(#roof)" stroke="#05070f" strokeWidth="2" strokeLinejoin="round" />
+      <Plating x={14} y={126} w={84} h={52} />
+      <Slit x={26} y={138} w={22} /><Slit x={26} y={150} w={34} /><Slit x={62} y={138} w={24} />
+      <rect x="62" y="156" width="22" height="26" rx="2" fill="#0a1020" stroke="#05070f" strokeWidth="1.600" />
+      <path d="M64 168H82" stroke="#38e1ff" strokeWidth="1.100" opacity="0.8" />
+      <path d="M44 112V94" stroke="#9aa7c0" strokeWidth="2" />
+      <Dish x={44} y={96} k={0.9} rot={-30} />
+      <path d="M70 112V100" stroke="#9aa7c0" strokeWidth="1.600" /><circle cx="70" cy="98" r="2" fill="#ff3b4e" className="blink" />
       <rect x="8" y="90" width="96" height="92" fill="transparent" />
     </>
   );
@@ -160,10 +234,14 @@ export const ControlRoom = memo(function ControlRoom() {
 export const DataCenter = memo(function DataCenter() {
   return (
     <>
-      <rect x="268" y="130" width="72" height="48" fill="url(#wall)" {...ink(2.4)} />
-      <rect x="262" y="118" width="84" height="14" fill="url(#steel)" {...ink(2.4)} />
-      <path d="M334 118V96M326 96h16" stroke={INK} strokeWidth="3" strokeLinecap="round" />
-      <path d="M296 118L306 98L316 118" fill="url(#gold)" {...ink(2)} />
+      <path d="M264 180V138L272 130H340L348 138V180z" fill="url(#metal)" stroke="#05070f" strokeWidth="2.200" strokeLinejoin="round" />
+      <path d="M270 130L276 118H336L342 130z" fill="url(#roof)" stroke="#05070f" strokeWidth="2" strokeLinejoin="round" />
+      <Plating x={264} y={132} w={84} h={46} />
+      {[0, 1, 2, 3].map((i) => <path key={i} d={`M${280 + i * 16} 118V108`} stroke="#566178" strokeWidth="3" />)}
+      <path d="M296 118V96" stroke="#9aa7c0" strokeWidth="2" />
+      <Dish x={296} y={98} k={1.1} rot={20} />
+      <path d="M334 118V92" stroke="#9aa7c0" strokeWidth="1.600" /><circle cx="334" cy="90" r="2.200" fill="#ff3b4e" className="blink" />
+      <rect x="276" y="140" width="60" height="4" rx="2" fill="url(#slit)" filter="url(#glow)" opacity="0.8" />
       <rect x="256" y="94" width="96" height="90" fill="transparent" />
     </>
   );
@@ -174,15 +252,16 @@ export const DetBackdrop = memo(function DetBackdrop() {
   return (
     <g>
       <rect width={W} height={H} fill="url(#cavern)" />
-      {Array.from({ length: 6 }, (_, i) => <path key={i} d={`M${40 + i * 56} 0L${20 + i * 56} 120L${60 + i * 56} 120z`} fill="url(#cone)" opacity="0.12" />)}
-      <rect x="0" y="470" width={W} height="70" fill="#161d36" {...ink(2.4)} />
-      <path d="M0 470H360" stroke="#3a4770" strokeWidth="3" />
-      {Array.from({ length: 9 }, (_, i) => <rect key={i} x={i * 42 + 6} y="482" width="30" height="6" rx="2" fill="#242e52" />)}
-      <path d="M70 470L100 420H260L290 470z" fill="url(#steel)" {...ink(3)} />
-      <path d="M96 428H264" stroke="#8fa0c4" strokeWidth="2" opacity="0.6" />
-      <rect x="0" y="70" width="14" height="400" fill="url(#steel)" {...ink(2.4)} /><rect x="346" y="70" width="14" height="400" fill="url(#steel)" {...ink(2.4)} />
-      <path d="M14 110C60 150 40 230 14 260M346 100C300 150 320 240 346 280" stroke="#e0483f" strokeWidth="3" fill="none" strokeLinecap="round" />
-      <path d="M14 130C70 180 50 250 14 300M346 130C290 190 316 260 346 320" stroke="#38bdf8" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+      <rect width={W} height={H} fill="url(#plates)" opacity="0.5" />
+      {Array.from({ length: 6 }, (_, i) => <path key={i} d={`M${40 + i * 56} 0L${20 + i * 56} 120L${60 + i * 56} 120z`} fill="url(#cone)" opacity="0.1" />)}
+      <rect x="0" y="470" width={W} height="70" fill="#0d1226" stroke="#05070f" strokeWidth="2.400" />
+      <path d="M0 470H360" stroke="#38e1ff" strokeWidth="1.400" opacity="0.6" filter="url(#glow)" />
+      {Array.from({ length: 9 }, (_, i) => <rect key={i} x={i * 42 + 6} y="482" width="30" height="6" rx="2" fill="#1a2244" stroke="#38e1ff" strokeOpacity="0.2" strokeWidth="0.6" />)}
+      <path d="M70 470L100 420H260L290 470z" fill="url(#steel)" stroke="#05070f" strokeWidth="3" strokeLinejoin="round" />
+      <path d="M96 428H264" stroke="#9fb4de" strokeWidth="1.600" opacity="0.6" />
+      <rect x="0" y="70" width="14" height="400" fill="url(#steel)" stroke="#05070f" strokeWidth="2.400" /><rect x="346" y="70" width="14" height="400" fill="url(#steel)" stroke="#05070f" strokeWidth="2.400" />
+      <path d="M14 110C60 150 40 230 14 260M346 100C300 150 320 240 346 280" stroke="#ff4d5e" strokeWidth="2.600" fill="none" strokeLinecap="round" filter="url(#glow)" opacity="0.85" />
+      <path d="M14 130C70 180 50 250 14 300M346 130C290 190 316 260 346 320" stroke="#38e1ff" strokeWidth="2.200" fill="none" strokeLinecap="round" filter="url(#glow)" opacity="0.85" />
     </g>
   );
 });
