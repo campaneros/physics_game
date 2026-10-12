@@ -1,0 +1,41 @@
+/* Scheda Fisica. */
+#physics-host { display: flex; flex-direction: column; gap: 10px; }
+.targets { display: flex; gap: 8px; padding: 4px 2px 8px; overflow-x: auto; scrollbar-width: thin; }
+.targets.wrap { flex-wrap: wrap; overflow: visible; }
+.target { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 132px; max-width: 170px; min-height: 52px; padding: 8px 12px; text-align: left; color: var(--text); cursor: pointer; background: linear-gradient(var(--panel-hi), var(--panel-lo)); border: var(--stroke) solid var(--ink); border-radius: var(--radius-sm); box-shadow: var(--lift), inset 0 0 0 1.5px var(--line); transition: transform var(--t-fast) var(--ease-out); }
+.target strong { font: 700 0.98rem/1.1 var(--font-display); text-shadow: 0 2px 0 var(--ink); }
+.target .tag { display: inline-flex; align-items: center; gap: 4px; color: var(--muted); font-size: 0.78rem; white-space: nowrap; }
+.target.sel { background: linear-gradient(var(--cern-hi), var(--cern)); box-shadow: var(--lift), inset 0 1px 0 rgba(255, 255, 255, 0.35); transform: translateY(-2px); }
+.target.sel .tag { color: #dbeeff; }
+.target:active:not(:disabled) { transform: translateY(2px); }
+.target:disabled { opacity: 0.55; cursor: default; filter: grayscale(0.6); }
+.fold { align-self: flex-start; min-height: 36px; padding: 4px 12px; font: 700 0.85rem/1 var(--font-display); color: var(--muted); background: none; border: var(--stroke-thin) dashed var(--line); border-radius: 18px; box-shadow: none; }
+
+.panel { display: flex; flex-direction: column; gap: 10px; }
+.panel h2, .panel h3, .panel p { margin: 0; }
+.panel h2 { font-size: 1.3rem; color: #fff; text-shadow: 0 2px 0 var(--ink); }
+.panel h3 { font-size: 0.95rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--cyan); }
+.panel small { display: block; }
+.stat { font-weight: 700; }
+.muted { color: var(--muted); font-size: 0.9rem; }
+.tutorial { padding: 6px 10px; color: #cfe9ff; background: rgba(0, 83, 161, 0.25); border: var(--stroke-thin) solid var(--cern); border-radius: 8px; }
+.foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+.fund-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 2px 12px; color: #fff3c4; font-size: 0.9rem; background: rgba(0, 0, 0, 0.3); border: var(--stroke-thin) solid var(--ink); border-radius: 18px; box-shadow: inset 0 0 0 1.5px var(--gold-d); }
+.opts { display: flex; flex-wrap: wrap; gap: 6px; }
+
+ul.req { margin: 0; padding: 0; }
+.detbox { display: flex; flex-direction: column; gap: 8px; padding: 10px; background: var(--bg-deep); border: var(--stroke) solid var(--ink); border-radius: var(--radius-sm); box-shadow: inset 0 0 0 1.5px var(--line); }
+.req-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.req-row strong { min-width: 7em; font-size: 0.92rem; }
+.req-row small { flex: 1 1 100%; }
+
+canvas.hist { width: 100%; aspect-ratio: 480 / 220; border: var(--stroke) solid var(--ink); border-radius: var(--radius-sm); box-shadow: inset 0 0 0 1.5px var(--line); }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 0.78rem; color: var(--muted); }
+.legend .lg { display: inline-flex; align-items: center; gap: 5px; }
+.sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; border: var(--stroke-thin) solid var(--ink); }
+.sw-obs { background: #38bdf8; } .sw-bkg { background: #f87171; } .sw-sig { background: #4ade80; }
+
+.meter { display: grid; grid-template-columns: 8.5em 1fr 3em; align-items: center; gap: 8px; }
+.meter small:last-child { text-align: right; }
+.panel input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--cyan); touch-action: pan-y; }
+@media (prefers-reduced-motion: reduce) { .target { transition: none; } }

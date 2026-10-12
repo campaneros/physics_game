@@ -3,6 +3,7 @@ import { Game, UI, tr } from '../engine.js';
 import { useBanner, useGame, useTab } from '../store.js';
 import { Icon } from '../ds/icons.jsx';
 import { SiteView } from '../site/SiteView.jsx';
+import { PhysicsView } from '../physics/PhysicsView.jsx';
 
 export const TABS = [
   { id: 'site', icon: 'ring' },
@@ -40,7 +41,7 @@ export function Viewport() {
   return (
     <main>
       <section id="view-site" className="view" aria-label={tr('tab.site')} hidden={tab !== 'site'}><SiteView /></section>
-      <section id="view-physics" className="view" aria-label={tr('tab.physics')} hidden={tab !== 'physics'}><div id="physics-host" /></section>
+      <section id="view-physics" className="view" aria-label={tr('tab.physics')} hidden={tab !== 'physics'}><PhysicsView /></section>
       <section id="view-play" className="view" aria-label={tr('tab.play')} hidden={tab !== 'play'}><div id="play-host" /></section>
       <section id="view-budget" className="view" aria-label={tr('tab.budget')} hidden={tab !== 'budget'}>
         <p id="budget-lock" className="card" hidden={budgetOpen}>{tr('budget.note.locked')}</p>

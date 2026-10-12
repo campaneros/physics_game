@@ -6,3 +6,5 @@ import { UI } from './engine.js';
 export const useGame = (select) => useSyncExternalStore(UI.subscribe, () => select(UI.get()));
 export const useTab = () => useSyncExternalStore(UI.subscribe, UI.getTab);
 export const useBanner = () => useSyncExternalStore(UI.subscribe, UI.getBanner);
+/** Stato di gioco completo: per le viste che ne leggono molte parti (si rinnova a ogni tick). */
+export const useSnapshot = () => useSyncExternalStore(UI.subscribe, UI.get);

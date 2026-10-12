@@ -41,10 +41,10 @@ export function ActionButton({ icon, label, labelClass, badge, tone = 'blue', wa
 }
 
 // Indicatore a punti (matrice di livello 1..max).
-export function Pips({ value, max = 4, className }) {
+export function Pips({ value, max = 4, need = 0, className }) {
   return (
     <span className={cx('ds-pips', className)} role="img" aria-label={`${value}/${max}`}>
-      {Array.from({ length: max }, (_, i) => <i key={i} className={i < value ? 'on' : undefined} />)}
+      {Array.from({ length: max }, (_, i) => <i key={i} className={i < value ? 'on' : i < need ? 'next' : undefined} />)}
     </span>
   );
 }
@@ -61,7 +61,7 @@ export function Meter({ value, tone = 'cyan', label, className }) {
 // Voce di checklist (requisito soddisfatto o no).
 export function Check({ ok, children, className }) {
   return (
-    <li className={cx('ds-check', ok ? 'is-ok' : 'is-ko', className)}>
+    <li className={cx('ds-check', ok ? 'is-ok ok' : 'is-ko bad', className)}>
       <span className="ds-check__mark"><Icon name={ok ? 'check' : 'cross'} size={14} /></span>
       <span>{children}</span>
     </li>
@@ -75,6 +75,11 @@ export function MapNode({ icon = 'atom', state = 'next', label, className, ...re
       <Icon name={state === 'locked' ? 'lock' : icon} size={26} />
     </button>
   );
+}
+
+// Chip a due stati (aria-pressed): scelte multiple e opzioni.
+export function Chip({ pressed, className, children, ...rest }) {
+  return <button type="button" className={cx('ds-chip', 'chip', className)} aria-pressed={pressed} {...rest}>{children}</button>;
 }
 
 export function Tip({ text, children }) {
