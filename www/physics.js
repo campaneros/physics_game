@@ -6,7 +6,7 @@
   const PR = isNode ? require('./processes.js') : root.Processes;
   const C = isNode ? require('./core.js') : root.Core;
 
-  const BASE_LUMI = 10; // fb⁻¹ all'anno a luminosità livello 0
+  const BASE_LUMI = 5; // fb⁻¹ all'anno a luminosità livello 0
   const MAX_LUMI = 12;
   const LUMI_GROWTH = 2.5; // la luminosità cresce di 2,5× per livello
   const DAQ_GROWTH = 6; // la banda del trigger cresce di 6× per livello DAQ
@@ -62,7 +62,7 @@
   }
 
   // Misure in parallelo: gli adroni ne fanno fino a 1 + livello DAQ, i leptoni una sola.
-  const slots = (s) => Math.max(1, Math.min(PR.COLLIDERS[s.collider].maxSlots, 1 + s.det.daq));
+  const slots = (s) => Math.max(1, Math.min(PR.COLLIDERS[s.collider].maxSlots, PR.COLLIDERS[s.collider].baseSlots + s.det.daq));
   const activeIds = (s) => [s.program, ...(s.extra || [])].filter((id, i, a) => id && PR.BY_ID.has(id) && a.indexOf(id) === i);
   const DEFAULT_CFG = { trig: 0.3, cut: 0.3 };
   const cfgFor = (s, id) => (s.cfg && s.cfg[id]) || DEFAULT_CFG;
@@ -198,7 +198,7 @@
     const pick = [...new Set(chosen)].filter((c) => PR.CUTS.includes(c)).slice(0, PR.MAX_CUTS);
     const good = pick.filter((c) => goodCuts(p).includes(c)).length;
     const bad = pick.length - good;
-    return { m: Math.min(1, 0.6 + 0.14 * good) * 0.92 ** bad, good, bad, pick };
+    return { m: Math.min(1, 0.6 + 0.14 * good) * 0.85 ** bad, good, bad, pick };
   }
 
   const review = (seed, id, round, prob) => C.rng(C.hash(`${seed}:review:${id}:${round}`))() < prob;

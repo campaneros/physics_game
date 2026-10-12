@@ -14,15 +14,17 @@ const noTransfers = run({ transfers: false });
 const oneYear = run({ runYears: [1] });
 const weak = run({ strategy: () => 'cuts' });
 const randomCuts = run({ cutsPolicy: 'random' });
+const serial = run({ parallel: false });
 const H = expert.hours;
 const sc = (r) => r.counts.scooped;
 
-gate('G1 durata esperto 7,0-8,5 h', H >= 7 && H <= 8.5, `${H.toFixed(1)} h`);
+gate('G1 durata esperto 10-12,5 h', H >= 10 && H <= 12.5, `${H.toFixed(1)} h`);
 gate('G2 senza trasferimenti ≤ 1,15× esperto', noTransfers.hours <= 1.15 * H, `${noTransfers.hours.toFixed(1)} h (${(noTransfers.hours / H).toFixed(2)}×)`);
 gate('G2 solo corse da 1 anno ≤ 1,15× esperto', oneYear.hours <= 1.15 * H, `${oneYear.hours.toFixed(1)} h (${(oneYear.hours / H).toFixed(2)}×)`);
-gate('G3 strategia debole ≤ 2,2× esperto', weak.hours <= 2.2 * H, `${weak.hours.toFixed(1)} h (${(weak.hours / H).toFixed(2)}×)`);
-gate('G3 strategia debole: scavalcato ≤ 20 volte su 56', sc(weak) <= 20, `${sc(weak)}`);
-gate('G4 tagli a caso ≤ 2,0× esperto', randomCuts.hours <= 2.0 * H, `${randomCuts.hours.toFixed(1)} h (${(randomCuts.hours / H).toFixed(2)}×)`);
+gate('G3 strategia debole 1,8-3,0× esperto (le scelte contano, ma non si resta bloccati)', weak.hours >= 1.8 * H && weak.hours <= 3 * H, `${weak.hours.toFixed(1)} h (${(weak.hours / H).toFixed(2)}×)`);
+gate('G3 strategia debole: scavalcato 10-40 volte su 56 (i rivali contano)', sc(weak) >= 10 && sc(weak) <= 40, `${sc(weak)}`);
+gate('G4 tagli a caso 1,25-2,5× esperto (scegliere i tagli giusti conviene)', randomCuts.hours >= 1.25 * H && randomCuts.hours <= 2.5 * H, `${randomCuts.hours.toFixed(1)} h (${(randomCuts.hours / H).toFixed(2)}×)`);
+gate('G8 cercare più misure insieme (adroni) conviene: una alla volta ≥ 1,08× esperto', serial.hours >= 1.08 * H, `${serial.hours.toFixed(1)} h (${(serial.hours / H).toFixed(2)}×)`);
 gate('G6 esperto scavalcato ≤ 2 volte', sc(expert) <= 2, `${sc(expert)}`);
 
 // ritmo
@@ -30,8 +32,8 @@ const times = Object.entries(expert.firstDone).sort((a, b) => a[1] - b[1]).map((
 const n = times.length;
 const avg = (a, b) => (times[b - 1] - (a ? times[a - 1] : 0)) / (b - a);
 const thirds = [avg(0, Math.floor(n / 3)), avg(Math.floor(n / 3), Math.floor((2 * n) / 3)), avg(Math.floor((2 * n) / 3), n)];
-gate('G7 ritmo: ogni terzo 5-12 min e in discesa', thirds.every((x) => x >= 5 && x <= 12) && thirds[0] > thirds[2], thirds.map((x) => x.toFixed(1)).join(' → '));
-gate('G7 primo risultato ≥ 8 min', times[0] >= 8, `${times[0].toFixed(0)} min`);
+gate('G7 ritmo: ogni terzo 8-16 min e in discesa', thirds.every((x) => x >= 8 && x <= 16) && thirds[0] > thirds[2], thirds.map((x) => x.toFixed(1)).join(' → '));
+gate('G7 primo risultato 8-20 min', times[0] >= 8 && times[0] <= 20, `${times[0].toFixed(0)} min`);
 
 // fondi a regime contro i costi massimi
 const al = G.newState(0, 'x').alloc;

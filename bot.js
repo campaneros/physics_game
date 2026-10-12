@@ -6,7 +6,7 @@ const PH = require('./www/physics.js');
 
 const BEST = { peak: 'bump', rare: 'mva', nonres: 'mva', precision: 'fit' };
 
-function play({ score = 80, strategy = (p) => BEST[p.type], maxHours = 120, lazy = false, transfers = true, runYears = [2, 1], cutsPolicy = 'good', sample = 0, seed = 'bot', snapshotHours = [] }) {
+function play({ score = 80, strategy = (p) => BEST[p.type], maxHours = 120, lazy = false, transfers = true, runYears = [2, 1], cutsPolicy = 'good', sample = 0, seed = 'bot', snapshotHours = [], parallel = true }) {
   let s = G.newState(0, seed);
   const snapshots = {};
   const pendingSnaps = snapshotHours.slice().sort((x, y) => x - y);
@@ -56,7 +56,7 @@ function play({ score = 80, strategy = (p) => BEST[p.type], maxHours = 120, lazy
     // misure attive: le più "a portata di mano" (requisiti già soddisfatti) fino ai posti disponibili; le altre servono a pianificare gli upgrade
     const runnable = open.filter((p) => G.canRun(s, p.id) || s.shutdown || !s.built);
     const ready = runnable.slice().sort((x, y) => x.L5 - y.L5);
-    const wanted = (ready.length ? ready : open).slice(0, Math.max(1, PH.slots(s)));
+    const wanted = (ready.length ? ready : open).slice(0, parallel ? Math.max(1, PH.slots(s)) : 1);
     const cur = G.programsOf(s);
     if (wanted.map((p) => p.id).join() !== cur.join() && !s.run) {
       s = G.select(s, wanted[0].id);

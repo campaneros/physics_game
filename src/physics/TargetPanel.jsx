@@ -3,6 +3,7 @@ import { Popups } from '../popups/api.js';
 import { Button, Check, Panel } from '../ds/primitives.jsx';
 import { AnalysisCard, DoneCard, JobCard } from './Analysis.jsx';
 import { DetectorMatrix } from './DetectorMatrix.jsx';
+import { outcome } from './TargetList.jsx';
 import { Histogram } from './Histogram.jsx';
 import { TriggerControls } from './TriggerControls.jsx';
 
@@ -31,6 +32,16 @@ function ProgramToggle({ s, id }) {
   );
 }
 
+// Esito in evidenza: chiaro a colpo d'occhio se il bersaglio è stato scoperto/misurato o no.
+function StatusBanner({ s, p }) {
+  const d = s.done[p.id];
+  if (d) {
+    const res = outcome(p, d);
+    return <div className={`status ${res.cls}`} role="status">{tr(res.key)}</div>;
+  }
+  return <div className="status is-todo" role="status">{tr(p.kind === 'measure' ? 'status.todo.measure' : 'status.todo.discovery')}</div>;
+}
+
 export function TargetPanel({ s, p, sel, onSel }) {
   const id = p.id;
   const d = s.done[id];
@@ -46,6 +57,7 @@ export function TargetPanel({ s, p, sel, onSel }) {
   return (
     <Panel className="panel">
       <h2>{tr(`proc.${id}`)}</h2>
+      <StatusBanner s={s} p={p} />
       <p className="muted">{tr(`kind.${p.kind}`)}</p>
       <p className="muted">{tr(`hint.${p.type}`)}</p>
       <Requirements s={s} p={p} />

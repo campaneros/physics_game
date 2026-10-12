@@ -5,9 +5,9 @@
 
   // Collisori: energie disponibili (√s in GeV) e scala di segnale/fondo/luminosità rispetto all'adronico.
   const COLLIDERS = {
-    // cost: costruzione dell'anello; runMul: costo delle corse; maxSlots: misure in parallelo con un solo fascio (adroni: fino a 1 + livello DAQ)
-    pp: { energies: [2, 10, 30, 100, 300, 1000, 2000, 7000, 14000], sig: 1, bkg: 1, lumi: 1, cost: 350, runMul: 1.3, maxSlots: 4 },
-    ee: { energies: [2, 10, 30, 91, 160, 250, 350, 500], sig: 0.02, bkg: 0.0003, lumi: 2, cost: 200, runMul: 0.75, maxSlots: 1 },
+    // cost: costruzione dell'anello; runMul: costo delle corse; baseSlots/maxSlots: misure in parallelo (adroni: parte da 2 e cresce di 1 per livello DAQ fino a 6; leptoni: una alla volta)
+    pp: { energies: [2, 10, 30, 100, 300, 1000, 2000, 7000, 14000], sig: 1, bkg: 1, lumi: 1, cost: 350, runMul: 1.3, baseSlots: 2, maxSlots: 6 },
+    ee: { energies: [2, 10, 30, 91, 160, 250, 350, 500], sig: 0.02, bkg: 0.0003, lumi: 2, cost: 200, runMul: 0.75, baseSlots: 1, maxSlots: 1 },
   };
   const COLLIDER_SWITCH = { years: 3, cost: 2000 };
   const ACCELERATOR = { years: 0.5 }; // costruzione iniziale dell'anello (il costo dipende dal collisore)
@@ -126,7 +126,7 @@
   ];
 
   // Anni (dalla disponibilità) dopo cui un esperimento rivale pubblica: ~3× la durata di un giocatore esperto (tools/rivals.js).
-  const RIVAL = { rho: 11, omega: 13, phi: 25, jpsi: 37, kstar: 17, jpsi_xs: 22, psi2s: 28, upsilon: 39, ups23: 10, b_lifetime: 27, w: 30, bs_mumu: 48, z: 18, bmix: 41, lambdab: 70, w_mass: 45, z_width: 33, top: 41, sin2w: 41, ww: 71, single_top: 35, top_xs: 36, wz: 83, top_mass: 45, tt_gamma: 53, stop: 75, higgs: 81, squark: 81, wz_pol: 43, gluino: 98, leptoquark: 34, vbfh: 38, h_tautau: 40, heavy_nu: 59, zprime: 73, dm_mono: 78, h_mass: 80, h_width: 14, h_ww: 96, hbb: 99, hmumu: 110, h_cp: 24, charged_h: 23, hcc: 24, tth: 26, graviton: 129, four_top: 21, ttz: 33, hh: 42, www: 170, top_spin: 216, zz: 303, hzg: 200, h_self: 36, wprime: 210, vbs: 51 };
+  const RIVAL = { rho: 7, omega: 11, phi: 23, kstar: 15, jpsi: 48, jpsi_xs: 18, psi2s: 30, upsilon: 40, ups23: 9, w: 21, b_lifetime: 23, z: 25, bs_mumu: 50, bmix: 30, w_mass: 34, lambdab: 57, z_width: 17, top: 22, sin2w: 26, top_xs: 21, ww: 72, single_top: 26, zz: 48, top_mass: 29, wz: 54, tt_gamma: 34, stop: 74, higgs: 84, wz_pol: 55, squark: 89, gluino: 101, vbs: 76, leptoquark: 42, vbfh: 48, h_tautau: 57, zprime: 68, heavy_nu: 75, h_mass: 80, dm_mono: 92, h_width: 19, hbb: 102, h_ww: 102, h_cp: 24, charged_h: 23, hcc: 23, tth: 31, hmumu: 137, graviton: 143, four_top: 24, ttz: 37, hh: 44, top_spin: 241, www: 199, h_self: 24, hzg: 209, wprime: 212 };
 
   const RAW = CATALOG.map(([id, kind, type, menu, mass, pp, ee, need, tier, after, L5]) => ({
     id, kind, type, menu, mass, res0: RES[type][tier] * (type === 'peak' && tier === 0 ? 1 + 0.5 * (mass < 2) : 1), thr: { pp, ee }, need, L5,

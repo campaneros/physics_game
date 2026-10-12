@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Game as G, Processes as PR, UI, tr } from '../engine.js';
 import { useSnapshot, useTab } from '../store.js';
 import { Panel } from '../ds/primitives.jsx';
+import { ProgressBar } from './ProgressBar.jsx';
 import { TargetList } from './TargetList.jsx';
 import { TargetPanel } from './TargetPanel.jsx';
 
@@ -25,6 +26,7 @@ function PhysicsBody({ view, setView, sel, setSel, showDone, setShowDone, showLo
   const pick = (id) => { setView(id); if (!G.programsOf(s).length) UI.update((st) => G.select(st, id)); };
   return (
     <>
+      <ProgressBar s={s} />
       <TargetList s={s} curId={curId} onPick={pick} showDone={showDone} showLocked={showLocked} onToggleDone={() => setShowDone(!showDone)} onToggleLocked={() => setShowLocked(!showLocked)} />
       {!p && <p className="muted">{tr('physics.pick')}</p>}
       {G.isComplete(s) && <Finale s={s} />}

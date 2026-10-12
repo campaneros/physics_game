@@ -64,7 +64,7 @@
     for (const p of PR.PROCESSES) if (p.after.length === 0) availAt[p.id] = 0;
     return {
       v: SAVE_VERSION, seed, pools: { ...START_POOLS }, alloc: { ...DEFAULT_ALLOC }, boosts: [], rep: 0, t: 0,
-      collider: 'pp', energyLvl: 0, lumiLvl: 0,
+      collider: 'pp', energyLvl: 0, lumiLvl: 1,
       det: { ...PR.DETECTOR.start }, age: { tracker: 0, ecal: 0 },
       shutdown: null, shutdowns: 0, built: false, run: null, projects: {}, pending: [], claims: {}, program: null, extra: [],
       data: {}, cfg: {}, jobs: {}, done: {}, availAt, rivalNoted: {},

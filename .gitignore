@@ -10,3 +10,4 @@ test-results/
 e2e/screens/
 playwright-report/
 .ds-preview/
+soak/

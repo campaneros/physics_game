@@ -106,7 +106,9 @@ assert.ok(PH.plan('mva', { valid: true }, PR.BY_ID.get('rho')).prob < PH.plan('m
 {
   const det = { tracker: 2, ecal: 2, hcal: 2, muon: 2, daq: 2 };
   const pp = built({ det, collider: 'pp', energyLvl: 3, pools: { ops: 1e5, analysis: 1e5, rnd: 1e5 } });
-  assert.equal(PH.slots(pp), 3, 'adroni: 1 + livello DAQ');
+  assert.equal(PH.slots(pp), 2 + pp.det.daq, 'adroni: 2 posti di base + livello DAQ');
+  assert.equal(PH.slots({ ...pp, det: { ...pp.det, daq: 0 } }), 2, 'adroni: già con DAQ 0 si cercano due misure insieme');
+  assert.equal(PH.slots({ ...pp, det: { ...pp.det, daq: 4 } }), 6, 'adroni: massimo 6 misure insieme');
   assert.equal(PH.slots({ ...pp, collider: 'ee' }), 1, 'leptoni: una misura sola');
   let s = G.select(pp, 'rho');
   s = G.toggleProgram(s, 'jpsi');
@@ -334,14 +336,14 @@ assert.ok(smart.hours >= 2 && smart.hours <= 45, `durata fuori scala: ${smart.ho
 {
   const times = Object.entries(smart.firstDone).sort((a, b) => a[1] - b[1]).map(([, h]) => h * 60);
   assert.equal(times.length, 56, 'il catalogo ha 56 risultati');
-  assert.ok(smart.hours >= 6.5 && smart.hours <= 9.5, `durata totale ${smart.hours.toFixed(1)} h fuori dalle 6,5-9,5 h`);
+  assert.ok(smart.hours >= 10 && smart.hours <= 12.5, `durata totale ${smart.hours.toFixed(1)} h fuori dalle 10-12,5 h`);
   const avg = (a, b) => (times[b - 1] - (a ? times[a - 1] : 0)) / (b - a);
   const n = times.length;
   const thirds = [avg(0, Math.floor(n / 3)), avg(Math.floor(n / 3), Math.floor((2 * n) / 3)), avg(Math.floor((2 * n) / 3), n)];
   log('intervallo medio per terzo (min):', thirds.map((x) => x.toFixed(1)).join(' → '));
-  assert.ok(thirds.every((x) => x >= 5 && x <= 12), `intervalli per terzo fuori scala: ${thirds.map((x) => x.toFixed(1))}`);
+  assert.ok(thirds.every((x) => x >= 8 && x <= 16), `intervalli per terzo fuori scala: ${thirds.map((x) => x.toFixed(1))}`);
   assert.ok(thirds[0] > thirds[2], 'all\'inizio i risultati sono più radi che alla fine');
-  assert.ok(times[0] >= 8, 'il primo risultato non deve arrivare in pochi minuti');
+  assert.ok(times[0] >= 8 && times[0] <= 20, 'il primo risultato arriva tra 8 e 20 minuti');
 }
 
 const dumb = play({ strategy: () => 'cuts' });
