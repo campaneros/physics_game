@@ -1,0 +1,9 @@
+/* Modalità budget. */
+.bg { display: flex; flex-direction: column; gap: 12px; }
+.bg h2, .bg p { margin: 0; }
+.bg-remaining { font-weight: 700; color: var(--gold); }
+.bg-row { display: flex; flex-direction: column; gap: 2px; }
+.bg-log { margin: 0; padding-left: 20px; color: var(--muted); font-size: 0.85rem; }
+.bg-score { font-size: 1.15rem; font-weight: 700; }
+.bg-reward { margin: 4px 0; color: var(--gold); font-weight: 700; text-align: center; }
+.bg-result { display: flex; flex-direction: column; gap: 8px; }

@@ -42,8 +42,8 @@
 .ds-pips { display: inline-flex; gap: 4px; vertical-align: middle; }
 .ds-pips i { width: 11px; height: 11px; border-radius: 50%; background: var(--bg-deep); border: var(--stroke-thin) solid var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
 .ds-pips i.on { background: radial-gradient(circle at 35% 30%, #fff, var(--cyan) 50%, var(--cern)); box-shadow: 0 0 6px var(--cyan); }
-.ds-meter { display: block; height: 12px; overflow: hidden; border: var(--stroke-thin) solid var(--ink); border-radius: 7px; background: var(--bg-deep); box-shadow: inset 0 0 0 1px var(--line); }
-.ds-meter i { display: block; height: 100%; border-radius: 6px; background: linear-gradient(#7cc8ff, var(--cern-hi)); transition: width var(--t-med) var(--ease-out); }
+.ds-meter { position: relative; display: block; height: 12px; overflow: hidden; border: var(--stroke-thin) solid var(--ink); border-radius: 7px; background: var(--bg-deep); box-shadow: inset 0 0 0 1px var(--line); }
+.ds-meter i { position: absolute; left: 0; top: 0; bottom: 0; display: block; border-radius: 6px; background: linear-gradient(#7cc8ff, var(--cern-hi)); transition: width var(--t-med) var(--ease-out); }
 .ds-meter--green i { background: linear-gradient(#a7f3c4, #16a34a); }
 .ds-meter--red i { background: linear-gradient(#fecaca, #dc2626); }
 .ds-meter--gold i { background: linear-gradient(#ffe39a, var(--gold-d)); }
@@ -89,3 +89,7 @@
 .ds-chip:disabled { opacity: 0.45; cursor: default; }
 .ds-chip:focus-visible { outline: 3px solid var(--cyan); outline-offset: 2px; }
 .ds-pips i.next { border-color: var(--warn); box-shadow: inset 0 0 0 1px var(--warn); }
+
+.ds-meter__next { background: linear-gradient(#fde68a, var(--warn)) !important; opacity: 0.7; }
+.ds-meter__mark { position: absolute; top: 0; bottom: 0; width: 2px; background: #fff; }
+.ds-range { width: 100%; min-height: 44px; accent-color: var(--cyan); touch-action: pan-y; }

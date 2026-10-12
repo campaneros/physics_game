@@ -16,7 +16,7 @@
     return e;
   };
   const button = (text, onClick) => {
-    const b = el('button', null, text);
+    const b = el('button', 'ds-btn', text);
     b.type = 'button';
     b.addEventListener('click', onClick);
     return b;
@@ -179,7 +179,7 @@
       if (opts.shareLabel) row.append(button(opts.shareLabel, shareBtnHandler));
       if (opts.onNew) row.append(button(tr('mg.new'), () => opts.onNew()));
       if (opts.onAlt) row.append(button(opts.altLabel, () => opts.onAlt()));
-      if (opts.onClose) row.append(button(tr('mg.continue'), () => opts.onClose({ ok, launches: n, score: pts })));
+      if (opts.onClose) { const go = button(tr('mg.continue'), () => opts.onClose({ ok, launches: n, score: pts })); go.className = 'ds-btn ds-btn--primary primary'; row.append(go); }
       result.hidden = false;
       if (cancel) cancel.hidden = true;
       hint.textContent = '';

@@ -1,4 +1,5 @@
-import { Game as G, Physics as PH, UI, Popups, tr } from '../engine.js';
+import { Game as G, Physics as PH, UI, tr } from '../engine.js';
+import { Popups } from '../popups/api.js';
 import { Button, Check, Panel } from '../ds/primitives.jsx';
 import { AnalysisCard, DoneCard, JobCard } from './Analysis.jsx';
 import { DetectorMatrix } from './DetectorMatrix.jsx';

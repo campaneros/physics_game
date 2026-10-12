@@ -1,4 +1,5 @@
-import { Game, Physics, UI, Popups, I18n, tr } from '../engine.js';
+import { Game, Physics, UI, tr } from '../engine.js';
+import { Popups } from '../popups/api.js';
 import { useGame } from '../store.js';
 import { Icon } from '../ds/icons.jsx';
 import { IconButton } from '../ds/primitives.jsx';
@@ -27,7 +28,7 @@ export function TopBar() {
   return (
     <header className="top">
       <div className="topbar">
-        <IconButton id="help" icon="help" aria-label={tr('help.aria')} onClick={UI.openHelp} />
+        <IconButton id="help" icon="help" aria-label={tr('help.aria')} onClick={() => Popups.help()} />
         <div className="hud">
           <Stat id="hud-funds" icon="coin" label={tr('hud.funds')} value={funds} onClick={() => Popups.budget()} />
           <Stat id="hud-year" icon="clock" label={tr('hud.year')} value={year} />

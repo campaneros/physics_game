@@ -1,4 +1,5 @@
-import { Game, Processes, Popups, UI, tr } from '../engine.js';
+import { Game, Processes, UI, tr } from '../engine.js';
+import { Popups } from '../popups/api.js';
 import { useGame } from '../store.js';
 import { ActionButton } from '../ds/primitives.jsx';
 

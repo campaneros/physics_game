@@ -1,4 +1,5 @@
 // Componenti base del design system. Tutti passano className/id/aria-*/data-* al nodo radice, così i selettori dei test restano validi.
+import { useEffect, useRef } from 'react';
 import { Icon } from './icons.jsx';
 
 const cx = (...a) => a.filter(Boolean).join(' ');
@@ -49,12 +50,52 @@ export function Pips({ value, max = 4, need = 0, className }) {
   );
 }
 
-export function Meter({ value, tone = 'cyan', label, className }) {
-  const w = Math.max(0, Math.min(1, value));
+// Barra di avanzamento: value pieno, next (anteprima di dove si arriva) e mark (soglia) opzionali, tutti frazioni 0..1.
+const frac = (v) => `${Math.max(0, Math.min(1, v)) * 100}%`;
+export function Meter({ value, next, mark, tone = 'cyan', label, className }) {
   return (
-    <span className={cx('ds-meter', `ds-meter--${tone}`, className)} role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(w * 100)} aria-label={label}>
-      <i style={{ width: `${w * 100}%` }} />
+    <span className={cx('ds-meter', `ds-meter--${tone}`, className)} role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(Math.max(0, Math.min(1, value)) * 100)} aria-label={label}>
+      {next != null && <i className="ds-meter__next" style={{ width: frac(next) }} />}
+      <i style={{ width: frac(value) }} />
+      {mark != null && <b className="ds-meter__mark" style={{ left: frac(mark) }} />}
     </span>
+  );
+}
+
+// Cursore nativo: ascolta input e change dal DOM (non da React) e non salta mentre lo si trascina.
+export function Range({ value, min = 0, max = 100, step = 5, onInput, onChange, className, ...rest }) {
+  const ref = useRef(null);
+  const dragging = useRef(false);
+  const handlers = useRef({});
+  handlers.current = { onInput, onChange };
+  const latest = useRef(value);
+  latest.current = value;
+  useEffect(() => {
+    const el = ref.current;
+    const fire = (name) => () => { const h = handlers.current[name]; if (h) h(Number(el.value)); };
+    const input = fire('onInput');
+    const change = fire('onChange');
+    el.addEventListener('input', input);
+    el.addEventListener('change', change);
+    return () => { el.removeEventListener('input', input); el.removeEventListener('change', change); };
+  }, []);
+  useEffect(() => { if (!dragging.current && ref.current) ref.current.value = String(value); }, [value]);
+  // al rilascio il cursore torna al valore accettato (es. tetto del budget raggiunto)
+  const release = () => { dragging.current = false; if (ref.current) ref.current.value = String(latest.current); };
+  return (
+    <input
+      ref={ref}
+      type="range"
+      className={cx('ds-range', className)}
+      min={min}
+      max={max}
+      step={step}
+      defaultValue={value}
+      onPointerDown={() => { dragging.current = true; }}
+      onPointerUp={release}
+      onPointerCancel={release}
+      {...rest}
+    />
   );
 }
 

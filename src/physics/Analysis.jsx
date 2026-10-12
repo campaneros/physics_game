@@ -1,4 +1,5 @@
-import { Game as G, Minigame, Physics as PH, Processes as PR, UI, Popups, tr } from '../engine.js';
+import { Game as G, Minigame, Physics as PH, Processes as PR, UI, tr } from '../engine.js';
+import { Popups } from '../popups/api.js';
 import { Icon } from '../ds/icons.jsx';
 import { Button, Chip, Meter, Panel } from '../ds/primitives.jsx';
 

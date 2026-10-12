@@ -14,7 +14,7 @@ export function Defs() {
           <stop offset="0" stopColor="#7cc8ff" /><stop offset="0.55" stopColor="#1d7fd6" /><stop offset="1" stopColor="#0b3d78" />
         </linearGradient>
         <linearGradient id="ds-g-steel" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#c7d2ea" /><stop offset="1" stopColor="#5b6b8c" />
+          <stop offset="0" stopColor="#f1f5ff" /><stop offset="1" stopColor="#8d9dbd" />
         </linearGradient>
         <linearGradient id="ds-g-green" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#a7f3c4" /><stop offset="1" stopColor="#16a34a" />

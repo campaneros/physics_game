@@ -1,26 +1,5 @@
-import { useEffect, useRef } from 'react';
 import { Game as G, UI, tr } from '../engine.js';
-import { Button, Meter, Panel } from '../ds/primitives.jsx';
-
-// Cursore non controllato: segue lo stato solo quando non è trascinato (altrimenti il pollice "salta").
-function Slider({ max, value, onInput, inputRef }) {
-  const dragging = useRef(false);
-  useEffect(() => { if (!dragging.current && inputRef.current) inputRef.current.value = String(value); }, [value, inputRef]);
-  return (
-    <input
-      ref={inputRef}
-      type="range"
-      min="0"
-      max={max}
-      step="5"
-      defaultValue={value}
-      onInput={onInput}
-      onPointerDown={() => { dragging.current = true; }}
-      onPointerUp={() => { dragging.current = false; }}
-      onPointerCancel={() => { dragging.current = false; }}
-    />
-  );
-}
+import { Button, Meter, Panel, Range } from '../ds/primitives.jsx';
 
 const pct = (v) => `${Math.round(v * 100)}%`;
 
@@ -36,18 +15,16 @@ function MeterRow({ label, cls, value }) {
 
 // Trigger e soglia di selezione, con i misuratori di cosa si conserva.
 export function TriggerControls({ s, p, cfg, e }) {
-  const trigRef = useRef(null);
-  const cutRef = useRef(null);
-  const send = () => UI.update((st) => G.setCfg(st, p.id, { trig: Number(trigRef.current.value) / 100, cut: Number(cutRef.current.value) / 100 }));
+  const send = (patch) => UI.update((st) => G.setCfg(st, p.id, { ...G.cfgOf(st, p.id), ...patch }));
   const pur = e.ok ? e.Snom / (e.Snom + e.B || 1) : 0;
   return (
     <Panel>
       <h3>{tr('physics.trigger.title')}</h3>
       <small>{tr('physics.trig', { v: cfg.trig.toFixed(2) })}</small>
-      <Slider max={90} value={Math.round(cfg.trig * 100)} onInput={send} inputRef={trigRef} />
+      <Range max={90} value={Math.round(cfg.trig * 100)} onInput={(v) => send({ trig: v / 100 })} />
       <small className="muted">{tr('physics.trig.desc')}</small>
       <small>{tr('physics.cut', { v: cfg.cut.toFixed(2) })}</small>
-      <Slider max={120} value={Math.round(cfg.cut * 100)} onInput={send} inputRef={cutRef} />
+      <Range max={120} value={Math.round(cfg.cut * 100)} onInput={(v) => send({ cut: v / 100 })} />
       <small className="muted">{tr('physics.cut.desc')}</small>
       <MeterRow label={tr('physics.m.sig')} cls="m-sig" value={e.ok ? e.sigEff : 0} />
       <MeterRow label={tr('physics.m.bkg')} cls="m-bkg" value={e.ok ? e.bkgEff : 0} />

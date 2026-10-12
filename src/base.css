@@ -1,0 +1,12 @@
+/* Base comune: reset, tipografia, utilità. */
+* { box-sizing: border-box; }
+html, body { margin: 0; color: var(--text); font: 16px/1.4 var(--font-body); overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
+body { padding: env(safe-area-inset-top) env(safe-area-inset-right) calc(var(--nav-h) + env(safe-area-inset-bottom)) env(safe-area-inset-left); }
+[hidden] { display: none !important; }
+button { font: inherit; color: inherit; }
+h2 { margin: 0 0 8px; font-size: 1.1rem; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.view { display: flex; flex-direction: column; gap: 10px; }
+.row { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; }
+.req-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }

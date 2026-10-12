@@ -9,8 +9,6 @@
   const TICK_MS = 250;
   const MAX_DT_S = 2;
   const SAVE_EVERY_MS = 5000;
-  const ARM_MS = 3000;
-  const HELP_PAGES = 6;
   const AWAY_BANNER_MIN_S = 60;
 
   const $ = (id) => document.getElementById(id);
@@ -57,8 +55,6 @@
   let lastSave = 0;
   let shownEv = 0;
   let overlayCleanup = null;
-  let freeGame = null;
-  let budgetGame = null;
   const modules = [];
   const newsShown = new Set();
 
@@ -130,24 +126,14 @@
 
   window.addEventListener('popstate', () => closeOverlay(true));
 
-  function openHelp() {
-    showOverlay((body) => {
-      body.append(el('h2', null, tr('help.title')));
-      for (let i = 1; i <= HELP_PAGES; i++) body.append(el('p', null, tr(`help.p${i}`)));
-      let armedAt = 0;
-      const reset = button(tr('help.reset'), () => {
-        if (Date.now() - armedAt > ARM_MS) { armedAt = Date.now(); reset.textContent = tr('help.reset.armed'); return; }
-        store.clear();
-        s = G.newState(Date.now(), randomSeed());
-        shownEv = 0;
-        closeOverlay();
-        banner('');
-        render();
-      });
-      const row = el('div', 'row');
-      row.append(button(tr('help.close'), () => closeOverlay()), reset);
-      body.append(row);
-    });
+  // Azzera i progressi (chiamata dal popup di aiuto dopo la doppia conferma).
+  function resetGame() {
+    store.clear();
+    s = G.newState(Date.now(), randomSeed());
+    shownEv = 0;
+    closeOverlay();
+    banner('');
+    render();
   }
 
   // --- schede ----------------------------------------------------------------
@@ -161,48 +147,13 @@
     return tr('reward.gain', { gain: fmt(G.totalFunds(s) - before) });
   }
 
-  function ensureFree() {
-    if (freeGame) return;
-    // si parte da una partita libera (forma casuale ogni volta); la sfida del giorno è sempre la stessa, quindi è un'alternativa
-    const mount = (seed, label) => {
-      if (freeGame) freeGame.destroy();
-      const daily = seed === utcDay();
-      freeGame = Minigame.create($('play-host'), {
-        seed, label, shareLabel: tr('share.btn'),
-        onNew: () => mount(randomSeed(), tr('mode.free')),
-        onAlt: daily ? () => mount(randomSeed(), tr('mode.free')) : () => mount(utcDay(), tr('mode.daily')),
-        altLabel: daily ? tr('mode.free') : tr('mode.daily'),
-        onFinish: (r) => claimReward('shape', r.score, seed),
-      });
-    };
-    mount(randomSeed(), tr('mode.free'));
-  }
-
-  function ensureBudget() {
-    if (budgetGame || !G.unlockedBudget(s)) return;
-    const mount = (seed, label) => {
-      if (budgetGame) budgetGame.destroy();
-      budgetGame = BudgetUI.create($('budget-host'), {
-        seed, label,
-        onNew: () => mount(randomSeed(), tr('mode.freescenario')),
-        onPublish: (resId, pts) => {
-          update((st) => G.recordBudget(st, resId, pts));
-          return claimReward('budget', pts, seed);
-        },
-      });
-    };
-    mount(utcDay(), tr('mode.daily'));
-  }
-
   function showTab(name) {
     tab = name;
     notify();
   }
 
   // Chiamata da React dopo che la vista è visibile: i moduli vecchi misurano il proprio contenitore alla creazione.
-  function afterTab(name) {
-    if (name === 'play') ensureFree();
-    if (name === 'budget') ensureBudget();
+  function afterTab() {
     window.dispatchEvent(new Event('resize'));
   }
 
@@ -227,7 +178,7 @@
   }
 
   window.UI = {
-    tr, el, button, fmt, fmtYears, randomSeed, utcDay, banner, showOverlay, closeOverlay, showTab, afterTab, openHelp, switchLang,
+    tr, el, button, fmt, fmtYears, randomSeed, utcDay, banner, showOverlay, closeOverlay, showTab, afterTab, resetGame, switchLang, claimReward,
     get: () => s,
     getTab: () => tab,
     getBanner: () => bannerText,
@@ -240,7 +191,7 @@
     I18n.apply();
     for (const m of modules) if (m.init) m.init();
     resume();
-    if (!s.tutorial) { s = { ...s, tutorial: true }; openHelp(); }
+    if (!s.tutorial) { s = { ...s, tutorial: true }; Popups.help(); }
     render();
     setInterval(() => {
       const now = Date.now();

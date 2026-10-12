@@ -1,9 +1,11 @@
 import { useEffect, useLayoutEffect } from 'react';
-import { Game, UI, tr } from '../engine.js';
-import { useBanner, useGame, useTab } from '../store.js';
+import { UI, tr } from '../engine.js';
+import { useBanner, useTab } from '../store.js';
 import { Icon } from '../ds/icons.jsx';
 import { SiteView } from '../site/SiteView.jsx';
 import { PhysicsView } from '../physics/PhysicsView.jsx';
+import { PlayView } from '../play/PlayView.jsx';
+import { BudgetView } from '../budget/BudgetView.jsx';
 
 export const TABS = [
   { id: 'site', icon: 'ring' },
@@ -35,17 +37,15 @@ export function TabBar() {
 // Le viste restano tutte nel DOM (come prima): i moduli vecchi vi si montano e conservano il proprio stato.
 export function Viewport() {
   const tab = useTab();
-  const budgetOpen = useGame(Game.unlockedBudget);
   useLayoutEffect(() => { UI.afterTab(tab); }, [tab]);
   useEffect(() => { document.documentElement.dataset.tab = tab; }, [tab]);
   return (
     <main>
       <section id="view-site" className="view" aria-label={tr('tab.site')} hidden={tab !== 'site'}><SiteView /></section>
       <section id="view-physics" className="view" aria-label={tr('tab.physics')} hidden={tab !== 'physics'}><PhysicsView /></section>
-      <section id="view-play" className="view" aria-label={tr('tab.play')} hidden={tab !== 'play'}><div id="play-host" /></section>
+      <section id="view-play" className="view" aria-label={tr('tab.play')} hidden={tab !== 'play'}><PlayView /></section>
       <section id="view-budget" className="view" aria-label={tr('tab.budget')} hidden={tab !== 'budget'}>
-        <p id="budget-lock" className="card" hidden={budgetOpen}>{tr('budget.note.locked')}</p>
-        <div id="budget-host" hidden={!budgetOpen} />
+        <BudgetView />
       </section>
     </main>
   );

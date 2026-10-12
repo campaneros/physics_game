@@ -1,0 +1,30 @@
+/* Scena SVG del sito e del detector: stati interattivi e animazioni. */
+.scene { display: block; width: 100%; height: auto; max-height: 62dvh; margin: 6px auto 0; background: linear-gradient(#141a45 0, #6a3c80 22%, #e0708a 33%, #3d2716 35.5%, #2a1a0f 70%, #0f0a06 100%); border: 3px solid var(--ink); border-radius: 16px; box-shadow: 0 0 0 2px var(--cern), var(--lift-lg); touch-action: manipulation; }
+.hit { cursor: pointer; }
+.crane { animation: sway 2.4s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 100%; }
+@keyframes sway { from { transform: rotate(-4deg); } to { transform: rotate(4deg); } }
+.building { animation: pulse 1s ease-in-out infinite alternate; }
+@keyframes pulse { from { opacity: 0.4; } to { opacity: 1; } }
+.track { animation: flash 1.2s ease-out infinite; }
+@keyframes flash { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .crane, .building, .track { animation: none; } }
+.twinkle { animation: twinkle 2.6s ease-in-out infinite alternate; }
+@keyframes twinkle { from { opacity: 0.25; } to { opacity: 1; } }
+.drift { animation: drift 40s linear infinite alternate; }
+.drift.slow { animation-duration: 70s; }
+@keyframes drift { from { transform: translateX(-24px); } to { transform: translateX(34px); } }
+.marchant { animation: march 1.2s linear infinite; }
+@keyframes march { to { stroke-dashoffset: -20; } }
+.pulse2 { transform-box: fill-box; animation: pulse2 1.4s ease-in-out infinite alternate; transform-origin: center; }
+@keyframes pulse2 { from { transform: scale(0.92); } to { transform: scale(1.08); } }
+.dust { transform-box: fill-box; animation: dust 1.6s ease-out infinite; transform-origin: center; }
+@keyframes dust { 0% { transform: translateY(0) scale(0.6); opacity: 0.8; } 100% { transform: translateY(-22px) scale(1.5); opacity: 0; } }
+.lift { animation: lift 3s ease-in-out infinite alternate; }
+@keyframes lift { from { transform: translateY(0); } to { transform: translateY(18px); } }
+.breathe { transform-box: fill-box; animation: breathe 2.2s ease-in-out infinite alternate; transform-origin: center; }
+@keyframes breathe { from { opacity: 0.45; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .twinkle, .drift, .marchant, .pulse2, .dust, .lift, .breathe { transform-box: fill-box; animation: none; } }
+.flicker { animation: flicker 0.9s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: center; }
+@keyframes flicker { from { opacity: 0.7; transform: scale(0.96); } to { opacity: 1; transform: scale(1.05); } }
+@media (prefers-reduced-motion: reduce) { .flicker { animation: none; } }
+.hit:focus-visible { outline: 3px solid var(--cyan); }
