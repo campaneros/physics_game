@@ -24,7 +24,7 @@ export function ProgressBar({ s }) {
         <b>{`${closed}/${total}`}</b>
       </div>
       <Meter value={closed / total} tone="green" label={`${closed}/${total}`} />
-      <small className="muted">{ids.length ? tr('physics.active', { names, n: ids.length, max: PH.slots(s) }) : tr('physics.active.none')}</small>
+      <small className="muted">{ids.length ? tr('physics.active', { names, n: ids.length, max: PH.slots(s) }) : tr('physics.active.none', { max: PH.slots(s) })}</small>
     </Panel>
   );
 }

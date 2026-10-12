@@ -5,11 +5,13 @@
   "description": "Acceleratore: idle game di fisica con minigioco La forma nascosta",
   "scripts": {
     "build": "vite build",
-    "check": "node check.js && node check-game.js && node check-budget.js && node check-i18n.js",
+    "check": "node check.js && node check-game.js && node check-model.js && node check-budget.js && node check-i18n.js",
     "e2e": "npm run build && playwright test --config e2e/playwright.config.js",
     "e2e:long": "npm run build && E2E_LONG=1 playwright test --config e2e/playwright.config.js --grep @long",
     "balance": "node tools/balance.js",
-    "ds": "vite build --config vite.ds.config.js"
+    "ds": "vite build --config vite.ds.config.js",
+    "e2e:perf": "npm run build && E2E_ALL=1 playwright test --config e2e/playwright.config.js --grep @perf",
+    "e2e:visual": "npm run build && E2E_ALL=1 playwright test --config e2e/playwright.config.js --grep @visual"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",

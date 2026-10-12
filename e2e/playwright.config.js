@@ -10,7 +10,8 @@ module.exports = defineConfig({
   expect: { timeout: 5_000 },
   retries: 0,
   reporter: [['list']],
-  grepInvert: process.env.E2E_LONG ? undefined : /@long/,
+  // @long (partita del bot), @perf (frame e memoria) e @visual (screenshot di riferimento) non girano di default
+  grepInvert: process.env.E2E_LONG || process.env.E2E_ALL ? undefined : /@long|@perf|@visual/,
   outputDir: 'test-results',
   use: { baseURL: `http://127.0.0.1:${PORT}`, locale: 'it-IT', serviceWorkers: 'allow', trace: 'retain-on-failure' },
   projects: [{ name: 'phone', use: { ...devices['Desktop Chrome'], viewport: { width: 411, height: 860 }, locale: 'it-IT' } }],

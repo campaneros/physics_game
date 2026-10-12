@@ -24,6 +24,8 @@ Tutto offline: nessun permesso di rete, nessun backend. Le cifre fisiche sono or
 
 - `npm run check`: controlli veloci sulla logica (fisica, economia, budget, traduzioni), senza browser.
 - `npm run e2e`: suite nel browser (Playwright, Chromium, viewport telefono): costruzione, fisica, analisi con tagli, minigioco, progetti, budget, eventi, salvataggi ostili, offline/service worker, CSP, layout a 360/411/768 px, accessibilità, lingue. Gli screenshot vanno in `e2e/screens/`.
+- `npm run e2e:perf`: frame e memoria con CPU rallentata 8× (proxy in Chromium: la prova vera richiede un telefono Android). `npm run e2e:visual`: screenshot di riferimento (`--update-snapshots` per rigenerarli; dipendono da font e sistema).
+- `check-model.js` (dentro `npm run check`): formule del detector su tutti i processi e livelli, albero dei bersagli, seed e punteggio del minigioco, proprietà dei fondi su sequenze casuali.
 - `npm run balance`: criteri di bilanciamento misurabili (durata, ritmo, scenari di giocatori deboli, fondi contro costi massimi); `node tools/rivals.js [fattore]` rigenera i tempi dei rivali.
 - `node tools/audit.js`: rapporto con scenari, fuzz di 120 partite casuali e fattibilità dei collisori.
 - `node tools/profile.js`: mostra il ritmo dei risultati del bot; `node tools/calibrate.js N`: regola le luminosità richieste (`L5`) per avvicinarsi al ritmo voluto.
