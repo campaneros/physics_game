@@ -4,8 +4,8 @@
   'use strict';
   const G = Game;
   const PR = Processes;
-  const { tr, el, button, fmt } = UI;
-  const { S, icon, iconSvg } = SVG;
+  const { tr } = UI;
+  const { S, icon } = SVG;
   const A = SceneArt;
   const { INK, W, H, GROUND, ink } = A;
 
@@ -215,40 +215,14 @@
     render(UI.get());
   }
 
-  // --- mano di carte (HTML, bersagli grandi) -------------------------------------------
-  const FAN = [-7, -2.5, 2.5, 7];
-  function actions(host) {
-    const hand = el('div', 'hand');
-    const mk = (name, key, kind, fn) => {
-      const b = button('', fn);
-      b.className = `cardbtn ${kind}`;
-      b.setAttribute('aria-label', tr(key));
-      const orb = el('span', 'orb');
-      const art = el('span', 'art');
-      art.append(iconSvg(name, 44));
-      b.append(orb, art, el('span', 'ctitle', tr(key)));
-      const i = hand.children.length;
-      b.style.setProperty('--rot', `${FAN[i]}deg`);
-      b.style.setProperty('--lift', `${Math.abs(FAN[i]) * 1.4}px`);
-      hand.append(b);
-      return { b, badge: orb };
-    };
-    r.aBuild = mk('wrench', 'act.build', 'c-build', () => Popups.construction());
-    r.aProj = mk('bolt', 'act.projects', 'c-proj', () => Popups.projects());
-    r.aBudget = mk('coin', 'act.budget', 'c-budget', () => Popups.budget());
-    r.aRun = mk('play', 'act.run', 'c-run', () => Popups.run());
-    host.append(hand);
-  }
-
   function init() {
-    const host = document.getElementById('site-host');
+    const host = document.getElementById('scene-host'); // la mano di carte sotto la scena è in React (src/site/CommandDeck.jsx)
     r.svg = S('svg', { viewBox: `0 0 ${W} ${H}`, class: 'scene', role: 'group', 'aria-label': tr('tab.site') });
     r.svg.append(A.defs());
     r.site = buildSite();
     r.det = buildDet();
     r.svg.append(r.site, r.det);
     host.append(r.svg);
-    actions(host);
   }
 
   function render(s) {
@@ -286,13 +260,6 @@
       req.setAttribute('display', need ? 'inline' : 'none');
       if (need) req.setAttribute('stroke', lvl >= need ? '#4ade80' : '#f87171');
     }
-
-    r.aBuild.badge.textContent = s.built ? `${Object.values(s.projects).filter((q) => q.state === 'ready').length || s.shutdowns}` : '+';
-    r.aProj.badge.textContent = `${Object.keys(s.projects).length}/${G.MAX_PROJECTS}`;
-    r.aBudget.badge.textContent = fmt(G.annualBudget(s));
-    r.aBudget.b.classList.toggle('warn', s.pools.ops < G.runCost(s, 1));
-    r.aRun.badge.textContent = s.run ? '▶' : fmt(G.runCost(s, 1));
-    r.aRun.b.classList.toggle('warn', !s.run && !(p && G.canRun(s, p.id)));
   }
 
   UI.register({ init, render });

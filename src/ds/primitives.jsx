@@ -35,14 +35,14 @@ export function Orb({ children, tone = 'blue', className }) {
 }
 
 // Carta: cornice con rarità, nastro del titolo, riquadro illustrazione, corpo e badge d'angolo.
-export function Card({ title, art, cost, rarity = 'common', badge, selected, locked, className, children, onClick, disabled, ...rest }) {
+export function Card({ title, titleClass, art, cost, rarity = 'common', badge, selected, locked, className, children, onClick, disabled, ...rest }) {
   const Tag = onClick ? 'button' : 'div';
   const props = onClick ? { type: 'button', onClick, disabled } : {};
   return (
     <Tag className={cx('ds-card', `ds-card--${rarity}`, selected && 'is-selected', locked && 'is-locked', className)} {...props} {...rest}>
       {cost != null && <Orb className="ds-card__cost">{cost}</Orb>}
       {badge != null && <Badge className="ds-card__badge" tone="gold">{badge}</Badge>}
-      <span className="ds-card__ribbon"><span>{title}</span></span>
+      <span className="ds-card__ribbon"><span className={titleClass}>{title}</span></span>
       <span className="ds-card__art">{typeof art === 'string' ? <Icon name={art} size={34} /> : art}{locked && <span className="ds-card__lock"><Icon name="lock" size={22} /></span>}</span>
       {children != null && <span className="ds-card__body">{children}</span>}
     </Tag>

@@ -27,7 +27,8 @@
 .ds-badge--blue { background: linear-gradient(var(--cern-hi), var(--cern)); color: #fff; }
 .ds-badge--green { background: linear-gradient(#86efac, #16a34a); color: #052e16; }
 .ds-badge--red { background: linear-gradient(#fca5a5, #dc2626); color: #fff; }
-.ds-orb { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; font: 700 1rem/1 var(--font-display); color: #fff; text-shadow: 0 2px 0 var(--ink); border: var(--stroke) solid var(--ink); border-radius: 50%; background: radial-gradient(circle at 35% 28%, #9bd7ff, var(--cern-hi) 45%, #082e5c); box-shadow: 0 2px 0 var(--ink), inset 0 0 0 1.5px rgba(255, 255, 255, 0.35); }
+.ds-orb { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px; padding: 0 7px; white-space: nowrap; font: 700 1rem/1 var(--font-display); color: #fff; text-shadow: 0 2px 0 var(--ink); border: var(--stroke) solid var(--ink); border-radius: 15px; background: radial-gradient(circle at 35% 28%, #9bd7ff, var(--cern-hi) 45%, #082e5c); box-shadow: 0 2px 0 var(--ink), inset 0 0 0 1.5px rgba(255, 255, 255, 0.35); }
+.ds-orb--red { background: radial-gradient(circle at 35% 28%, #fecaca, #dc2626 55%, #7f1d1d); }
 .ds-orb--gold { background: radial-gradient(circle at 35% 28%, #fff1bd, var(--gold) 50%, var(--gold-d)); color: #2a1a00; text-shadow: none; }
 
 /* --- carta -------------------------------------------------------------------- */
@@ -86,3 +87,12 @@ button.ds-card:active:not(:disabled) { transform: translateY(2px) scale(0.98); t
   .ds-card, .ds-relic, .ds-btn, .ds-meter i { transition: none; }
   .ds-node--current, .ds-pop { animation: none; }
 }
+
+/* vetrina (index.html#ds) */
+.gallery { display: flex; flex-direction: column; gap: 14px; padding: 16px; }
+.gallery__row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 10px; }
+.gallery__row--cards { align-items: stretch; }
+.gallery__row--cards .ds-card { width: 92px; }
+.gallery__list { margin: 0 0 10px; padding: 0; }
+.gallery__icon { display: inline-flex; padding: 6px; border-radius: 8px; background: var(--panel-lo); border: var(--stroke-thin) solid var(--line); }
+.gallery .ds-meter { margin-top: 8px; }
