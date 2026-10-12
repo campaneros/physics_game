@@ -1,6 +1,6 @@
-// Cache-first dell'app shell. Cambia CACHE a ogni rilascio: i vecchi file vengono eliminati.
-const CACHE = 'acceleratore-v6';
-const SHELL = ['./', 'index.html', 'style.css', 'i18n.js', 'i18n-game.js', 'core.js', 'processes.js', 'physics.js', 'game.js', 'minigame.js', 'budget.js', 'budget-ui.js', 'ui.js', 'svg.js', 'popups.js', 'scene.js', 'ui-physics.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
+// Rete per prima (file sempre aggiornati), cache come ripiego offline. Cambia CACHE a ogni rilascio: i vecchi file vengono eliminati.
+const CACHE = 'acceleratore-v9';
+const SHELL = ['./', 'index.html', 'style.css', 'i18n.js', 'i18n-game.js', 'core.js', 'processes.js', 'physics.js', 'game.js', 'minigame.js', 'budget.js', 'budget-ui.js', 'ui.js', 'svg.js', 'popups.js', 'scene-art.js', 'scene.js', 'ui-physics.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -17,5 +17,12 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
-  e.respondWith(caches.match(e.request).then((hit) => hit || fetch(e.request)));
+  e.respondWith(
+    fetch(e.request)
+      .then((res) => {
+        if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); }
+        return res;
+      })
+      .catch(() => caches.match(e.request))
+  );
 });

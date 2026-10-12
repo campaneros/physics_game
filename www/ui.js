@@ -68,7 +68,9 @@
   function eventText(e) {
     const v = { ...e.v };
     if (v.id) v.name = tr(`proc.${v.id}`);
+    if (v.sub) v.subname = tr(`sub.${v.sub}`);
     if (v.key) v.name = v.key.startsWith('det:') ? tr(`sub.${v.key.slice(4)}`) : tr(`proj.name.${v.key}`);
+    if (e.k === 'fev') return tr(`fev.${v.id}`, { amt: fmt(v.amt), sign: v.sign });
     return tr(`ev.${e.k}`, v);
   }
 
@@ -94,23 +96,31 @@
   }
 
   // --- overlay (con tasto Indietro di Android) -------------------------------
+  let backTimer = 0;
   function closeOverlay(silent) {
     if ($('overlay').hidden) return;
     if (overlayCleanup) overlayCleanup();
     overlayCleanup = null;
     $('overlay-body').replaceChildren();
     $('overlay').hidden = true;
-    if (!silent && history.state && history.state.overlay) history.back();
+    document.body.classList.remove('modal');
+    if (silent) return;
+    // la voce di cronologia si toglie solo se nessun altro popup si apre subito (altrimenti la riusa showOverlay)
+    clearTimeout(backTimer);
+    backTimer = setTimeout(() => { if ($('overlay').hidden && history.state && history.state.overlay) history.back(); }, 0);
   }
 
   // build(body) costruisce il contenuto e può restituire una funzione di pulizia.
   function showOverlay(build) {
+    clearTimeout(backTimer);
     closeOverlay(true);
     const body = $('overlay-body');
     body.replaceChildren();
     overlayCleanup = build(body) || null;
     $('overlay').hidden = false;
-    history.pushState({ overlay: true }, '');
+    document.body.classList.add('modal');
+    if (history.state && history.state.overlay) history.replaceState({ overlay: true }, '');
+    else history.pushState({ overlay: true }, '');
   }
 
   window.addEventListener('popstate', () => closeOverlay(true));
@@ -148,14 +158,19 @@
 
   function ensureFree() {
     if (freeGame) return;
+    // si parte da una partita libera (forma casuale ogni volta); la sfida del giorno è sempre la stessa, quindi è un'alternativa
     const mount = (seed, label) => {
       if (freeGame) freeGame.destroy();
+      const daily = seed === utcDay();
       freeGame = Minigame.create($('play-host'), {
-        seed, label, shareLabel: tr('share.btn'), onNew: () => mount(randomSeed(), tr('mode.free')),
+        seed, label, shareLabel: tr('share.btn'),
+        onNew: () => mount(randomSeed(), tr('mode.free')),
+        onAlt: daily ? () => mount(randomSeed(), tr('mode.free')) : () => mount(utcDay(), tr('mode.daily')),
+        altLabel: daily ? tr('mode.free') : tr('mode.daily'),
         onFinish: (r) => claimReward('shape', r.score, seed),
       });
     };
-    mount(utcDay(), tr('mode.daily'));
+    mount(randomSeed(), tr('mode.free'));
   }
 
   function ensureBudget() {
@@ -184,7 +199,7 @@
 
   // --- ciclo -----------------------------------------------------------------
   function render() {
-    $('hud-funds').textContent = fmt(G.totalFunds(s));
+    $('hud-funds').textContent = fmt(s.pools.rnd);
     $('hud-year').textContent = s.t.toFixed(1);
     const e = PH.energy(s);
     $('hud-energy').textContent = e >= 1000 ? `${(e / 1000).toFixed(1)} TeV` : `${fmt(e)} GeV`;
@@ -215,6 +230,8 @@
     document.querySelectorAll('#tabs button').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.view)));
     $('lang').addEventListener('click', () => { I18n.setLang(I18n.otherLang()); save(); location.reload(); });
     $('help').addEventListener('click', openHelp);
+    $('hud-dev').addEventListener('click', () => Popups.budget());
+    document.querySelectorAll('[data-icon]').forEach((e) => e.append(SVG.iconSvg(e.dataset.icon, 22)));
     for (const m of modules) if (m.init) m.init();
     resume();
     if (!s.tutorial) { s = { ...s, tutorial: true }; openHelp(); }

@@ -17,15 +17,17 @@
 </head>
 <body>
   <header class="top">
-    <h1 data-i18n="app.title">Accelerator</h1>
-    <button id="help" type="button" data-i18n-aria="help.aria">?</button>
-    <button id="lang" type="button" data-i18n="lang.switch">IT</button>
-    <dl class="hud">
-      <div><dt data-i18n="hud.funds">Funds</dt><dd id="hud-funds">0</dd></div>
-      <div><dt data-i18n="hud.year">Year</dt><dd id="hud-year">0</dd></div>
-      <div><dt data-i18n="hud.energy">Energy</dt><dd id="hud-energy">0</dd></div>
-      <div><dt data-i18n="hud.rep">Reputation</dt><dd id="hud-rep">0</dd></div>
-    </dl>
+    <div class="topbar">
+      <button id="help" class="round" type="button" data-i18n-aria="help.aria">?</button>
+      <div class="hud">
+        <button id="hud-dev" class="hud-i" type="button" data-i18n-aria="hud.funds"><span class="ico" data-icon="coin"></span><b id="hud-funds">0</b></button>
+        <div class="hud-i" role="group" data-i18n-aria="hud.year"><span class="ico" data-icon="clock"></span><b id="hud-year">0</b></div>
+        <div class="hud-i" role="group" data-i18n-aria="hud.energy"><span class="ico" data-icon="bolt"></span><b id="hud-energy">0</b></div>
+        <div class="hud-i" role="group" data-i18n-aria="hud.rep"><span class="ico" data-icon="star"></span><b id="hud-rep">0</b></div>
+      </div>
+      <button id="lang" class="round" type="button" data-i18n="lang.switch">IT</button>
+    </div>
+    <h1 class="sr" data-i18n="app.title">Accelerator</h1>
     <p id="banner" role="status"></p>
   </header>
 
@@ -62,6 +64,7 @@
   <script src="ui.js"></script>
   <script src="svg.js"></script>
   <script src="popups.js"></script>
+  <script src="scene-art.js"></script>
   <script src="scene.js"></script>
   <script src="ui-physics.js"></script>
 </body>

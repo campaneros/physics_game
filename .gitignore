@@ -6,3 +6,6 @@ node_modules/
 local.properties
 .DS_Store
 .claude/
+test-results/
+e2e/screens/
+playwright-report/

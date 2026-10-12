@@ -33,10 +33,13 @@ Budget.ITEMS.forEach((i) => { need(`bg.item.${i.id}.name`); need(`bg.item.${i.id
 for (let seed = 0; seed < 300; seed++) need(`res.${Budget.scenario(seed).resonance}`);
 need('launch.one'); need('launch.other');
 const gameSrc = fs.readFileSync(path.join(WWW, 'game.js'), 'utf8');
-for (const k of ['published', 'scooped', 'limit', 'inconclusive', 'review', 'confirm', 'confirmfail', 'rival', 'shutdown.start', 'shutdown.done', 'proj.start', 'proj.done', 'proj.ready', 'proj.overrun', 'proj.delay', 'proj.boost', 'proj.idea', 'proj.paid', 'budget', 'run.start', 'run.done', 'claim']) {
+for (const k of ['published', 'scooped', 'limit', 'inconclusive', 'review', 'confirm', 'confirmfail', 'rival', 'shutdown.start', 'shutdown.done', 'build.done', 'proj.start', 'proj.done', 'proj.ready', 'proj.overrun', 'proj.delay', 'proj.boost', 'proj.idea', 'proj.paid', 'budget', 'run.start', 'run.done', 'claim']) {
   need(`ev.${k}`);
   assert.ok(gameSrc.includes(`'${k}'`), `evento ${k} non emesso da game.js`);
 }
+
+for (const e of require('./www/game.js').FUND_EVENTS) need(`fev.${e.id}`);
+assert.equal(require('./www/game.js').FUND_EVENTS.length, 20, 'venti eventi sui fondi');
 
 // 3. chiavi usate nel codice e nell'HTML; chiavi mai usate; niente italiano nel codice
 const stripComments = (src) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`])\/\/.*$/gm, '$1');

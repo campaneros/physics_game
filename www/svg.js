@@ -27,6 +27,7 @@
     rack: () => S('g', {}, S('rect', { x: 4, y: 3, width: 16, height: 18, rx: 2, fill: '#1e293b', stroke: '#94a3c0', 'stroke-width': 2 }), S('circle', { cx: 8, cy: 8, r: 1.5, fill: '#4ade80' }), S('circle', { cx: 8, cy: 13, r: 1.5, fill: '#4ade80' }), stroke('M12 8h5M12 13h5', '#94a3c0', 2)),
     ring: () => S('g', {}, S('circle', { cx: 12, cy: 12, r: 9, fill: 'none', stroke: '#94a3b8', 'stroke-width': 3 }), S('circle', { cx: 12, cy: 3, r: 2.5, fill: '#fde047' })),
     lock: () => S('g', {}, S('rect', { x: 5, y: 11, width: 14, height: 10, rx: 2, fill: '#94a3c0' }), stroke('M8 11V8a4 4 0 0 1 8 0v3', '#94a3c0', 2.4)),
+    star: () => S('path', { d: 'M12 2l3 6.5 7 .9-5.2 4.8 1.4 7L12 17.8 5.8 21.200l1.4-7L2 9.400l7-.9z', fill: '#fbbf24', stroke: '#92400e', 'stroke-width': 1.6, 'stroke-linejoin': 'round' }),
     search: () => S('g', {}, S('circle', { cx: 10, cy: 10, r: 6, fill: 'none', stroke: '#e6ebf5', 'stroke-width': 2.4 }), stroke('M15 15l6 6', '#e6ebf5', 2.6)),
   };
 

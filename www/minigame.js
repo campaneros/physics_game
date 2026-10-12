@@ -178,6 +178,7 @@
       row.replaceChildren();
       if (opts.shareLabel) row.append(button(opts.shareLabel, shareBtnHandler));
       if (opts.onNew) row.append(button(tr('mg.new'), () => opts.onNew()));
+      if (opts.onAlt) row.append(button(opts.altLabel, () => opts.onAlt()));
       if (opts.onClose) row.append(button(tr('mg.continue'), () => opts.onClose({ ok, launches: n, score: pts })));
       result.hidden = false;
       if (cancel) cancel.hidden = true;

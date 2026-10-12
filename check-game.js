@@ -46,15 +46,15 @@ assert.ok(PH.plan('mva', { valid: true }, PR.BY_ID.get('rho')).prob < PH.plan('m
 // --- 3. budget annuale: conti, riporto, finanziamenti temporanei ---------------
 {
   const s0 = G.newState(0, 'b');
-  assert.equal(poolsSum(s0), 1500, 'fondi iniziali');
+  assert.equal(poolsSum(s0), 1950, 'fondi iniziali');
   // nessun reddito dentro lo stesso anno
-  assert.equal(poolsSum(G.tick(s0, 0.9 * Y)), 1500);
-  // a ogni anno intero arriva il budget, diviso secondo l'allocazione, con riporto del 50%
+  assert.equal(poolsSum(G.tick(s0, 0.9 * Y)), 1950);
+  // a ogni anno intero arriva il budget, diviso secondo l'allocazione, con riporto pari a G.CARRY
   const s1 = G.tick(s0, 1 * Y + 5);
   const budget = G.annualBudget(s0);
   assert.equal(budget, G.BASE_BUDGET);
-  near(s1.pools.ops, s0.pools.ops * 0.5 + (budget * s0.alloc.ops) / 100, 1e-6);
-  near(poolsSum(s1), poolsSum(s0) * 0.5 + budget, 1e-6);
+  near(s1.pools.ops, s0.pools.ops * G.CARRY + (budget * s0.alloc.ops) / 100, 1e-6);
+  near(poolsSum(s1), poolsSum(s0) * G.CARRY + budget, 1e-6);
   // allocazione: somma 100 e minimo 10% per conto
   assert.equal(G.setAlloc(s0, { ops: 5, analysis: 45, rnd: 50 }), s0, 'sotto il minimo');
   assert.equal(G.setAlloc(s0, { ops: 50, analysis: 30, rnd: 30 }), s0, 'somma diversa da 100');
@@ -94,8 +94,95 @@ assert.ok(PH.plan('mva', { valid: true }, PR.BY_ID.get('rho')).prob < PH.plan('m
   let b = G.startShutdown({ ...empty }, ['accelerator', 'tracker', 'muon'], 'ee');
   b = G.tick(b, 3 * Y);
   assert.ok(b.built && b.collider === 'ee' && b.det.tracker === 1 && b.det.muon === 1);
+  const inst = G.startShutdown({ ...empty }, ['accelerator', 'tracker', 'muon', 'daq'], 'pp');
+  assert.ok(inst.built && !inst.shutdown && inst.shutdowns === 0 && inst.det.daq === 1, 'la prima costruzione è immediata e non è un Long Shutdown');
+  assert.equal(G.shutdownPlan(empty, ['accelerator', 'tracker']).instant, true);
+  assert.equal(G.shutdownPlan(built({ det: { tracker: 1, ecal: 1, hcal: 0, muon: 0, daq: 0 }, projects: { 'det:ecal': { state: 'ready' } } }), ['ecal']).instant, false);
   assert.equal(G.shutdownPlan(empty, ['collider']).ok, false);
   assert.equal(G.shutdownPlan(built(), ['accelerator']).ok, false);
+}
+
+// --- 4b. più misure insieme (adroni), costi dei collisori, upgrade collegati ------------------
+{
+  const det = { tracker: 2, ecal: 2, hcal: 2, muon: 2, daq: 2 };
+  const pp = built({ det, collider: 'pp', energyLvl: 3, pools: { ops: 1e5, analysis: 1e5, rnd: 1e5 } });
+  assert.equal(PH.slots(pp), 3, 'adroni: 1 + livello DAQ');
+  assert.equal(PH.slots({ ...pp, collider: 'ee' }), 1, 'leptoni: una misura sola');
+  let s = G.select(pp, 'rho');
+  s = G.toggleProgram(s, 'jpsi');
+  assert.deepEqual(G.programsOf(s), ['rho'], 'jpsi non è disponibile finché rho non è fatto');
+  const doneUp = Object.fromEntries(['rho', 'jpsi', 'upsilon', 'w', 'z', 'top', 'higgs'].map((id) => [id, { z: 9, sigma: 0, limit: false, scooped: false, t: 0 }]));
+  const open = G.toggleProgram(G.select({ ...pp, done: doneUp }, 'hbb'), 'hmumu');
+  assert.deepEqual(G.programsOf(open), ['hbb', 'hmumu'], 'dopo l\'Higgs si misurano più canali insieme');
+  assert.deepEqual(G.programsOf(G.toggleProgram(G.toggleProgram(open, 'zprime'), 'tth')), ['hbb', 'hmumu', 'zprime'], 'massimo = posti disponibili (DAQ 2 → 3)');
+  // dati per tutte le misure attive durante una corsa
+  const base = G.startRun(G.select(pp, 'rho'), 1);
+  const both = G.startRun({ ...G.select(pp, 'rho'), extra: ['jpsi'], done: {}, availAt: { jpsi: 0 } }, 1);
+  const ra = G.tick(base, 0.5 * Y);
+  const rb = G.tick(both, 0.5 * Y);
+  assert.ok(G.dataOf(ra, 'rho') > 0 && G.dataOf(rb, 'rho') > 0 && G.dataOf(rb, 'jpsi') > 0, 'una corsa dà dati a tutte le misure attive');
+  near(G.dataOf(rb, 'rho'), G.dataOf(ra, 'rho'));
+  // la banda del trigger è condivisa: con più misure si perde di più
+  const withSecond = PH.evaluate({ ...pp, program: 'rho', extra: ['jpsi'] }, PR.BY_ID.get('rho'), { trig: 0.1, cut: 0.3 }, 100);
+  const alone = PH.evaluate({ ...pp, program: 'rho', extra: [] }, PR.BY_ID.get('rho'), { trig: 0.1, cut: 0.3 }, 100);
+  assert.ok(withSecond.tg.total > alone.tg.total && withSecond.tg.loss <= alone.tg.loss && withSecond.tg.shared && !alone.tg.shared);
+  // costo: adronico più caro da costruire e da far girare
+  assert.ok(PR.COLLIDERS.pp.cost > PR.COLLIDERS.ee.cost && PR.COLLIDERS.pp.runMul > PR.COLLIDERS.ee.runMul);
+  const empty = G.newState(0, 'x');
+  assert.ok(G.shutdownPlan(empty, ['accelerator'], 'pp').cost > G.shutdownPlan(empty, ['accelerator'], 'ee').cost);
+  assert.ok(G.runCost(pp, 2) > G.runCost({ ...pp, collider: 'ee' }, 2));
+  // cambiare collisore azzera le misure extra
+  const sw = G.tick(G.startShutdown({ ...pp, extra: ['jpsi'], projects: { collider: { state: 'ready', kind: 'collider', spent: 1, cost: 1, years: 1 } } }, ['collider']), 10 * Y);
+  assert.equal(sw.collider, 'ee');
+  assert.deepEqual(sw.extra, []);
+  // ogni livello conta: un calorimetro migliore migliora efficienza e risoluzione delle misure con elettroni/fotoni (menu egamma)
+  const higgs = PR.BY_ID.get('higgs');
+  const d3 = PH.detector({ ...pp, det: { ...det, ecal: 3 } }, higgs);
+  const d4 = PH.detector({ ...pp, det: { ...det, ecal: 4 } }, higgs);
+  assert.ok(d4.ok && d4.res < d3.res && d4.eff > d3.eff, 'ECAL in più migliora il segnale egamma');
+  const g = PH.upgradeSummary({ ...pp, det: { ...det, ecal: 3 } }, 'ecal');
+  assert.ok(g.n >= 1 && g.res > 0 && g.eff > 0, 'il riassunto dell\'upgrade mostra un guadagno');
+  assert.ok(PH.upgradeSummary(pp, 'daq').slot === true);
+  // più energia sopra soglia = più eventi
+  const zb = PR.BY_ID.get('z');
+  assert.ok(PH.evaluate({ ...pp, energyLvl: 5 }, zb, { trig: 0.3, cut: 0.3 }, 10).Snom > PH.evaluate({ ...pp, energyLvl: 4 }, zb, { trig: 0.3, cut: 0.3 }, 10).Snom);
+}
+
+// --- 4c. tagli di analisi: tutorial guidato, poi scelta del giocatore ----------------------
+{
+  const q0 = PH.cutQuality(PR.BY_ID.get('top'), PH.goodCuts(PR.BY_ID.get('top')));
+  near(q0.m, 1);
+  assert.ok(PH.cutQuality(PR.BY_ID.get('top'), ['pt', 'jetveto', 'window']).m === 1);
+  assert.ok(PH.cutQuality(PR.BY_ID.get('top'), ['lepid', 'met', 'btag']).m < 0.5, 'tre tagli sbagliati: meno della metà del segnale');
+  assert.ok(PH.cutQuality(PR.BY_ID.get('top'), []).m <= 0.6, 'nessun taglio: analisi debole');
+  assert.ok(PH.cutQuality(PR.BY_ID.get('top'), ['pt', 'lepid']).m < PH.cutQuality(PR.BY_ID.get('top'), ['pt']).m);
+  const rich = built({ det: { tracker: 4, ecal: 4, hcal: 4, muon: 4, daq: 4 }, energyLvl: 6, pools: { ops: 1e5, analysis: 1e5, rnd: 1e5 }, data: { rho: 100, top: 2000 }, done: { z: { z: 9, sigma: 0, limit: false, scooped: false, t: 0 } }, availAt: { rho: 0, top: 0 } });
+  const tut = G.startAnalysis(rich, 'rho', 'bump', { blind: true, valid: true }, ['window']);
+  assert.deepEqual(tut.jobs.rho.cuts.sort(), [...PH.goodCuts(PR.BY_ID.get('rho'))].sort(), 'livello 0: i tagli sono guidati');
+  const good = G.startAnalysis(rich, 'top', 'mva', { blind: true, valid: true }, ['pt', 'jetveto', 'window']);
+  const bad = G.startAnalysis(rich, 'top', 'mva', { blind: true, valid: true }, ['lepid', 'met', 'btag']);
+  assert.ok(good.jobs.top.q > bad.jobs.top.q && good.jobs.top.good === 3 && bad.jobs.top.bad === 3);
+  const wrongEnd = G.tick(bad, 5 * Y);
+  assert.equal(wrongEnd.done.top, undefined, 'con i tagli sbagliati non si pubblica');
+  assert.ok(G.tick(good, 5 * Y).jobs.top.state === 'confirm', 'con i tagli giusti la stessa statistica basta');
+  assert.ok(wrongEnd.events.some((e) => e.k === 'inconclusive' && e.v.good === 0));
+}
+
+// --- 5b. eventi casuali sui fondi -------------------------------------------------------
+{
+  assert.equal(G.FUND_EVENTS.length, 20);
+  const seen = new Set();
+  const signs = new Set();
+  for (let i = 0; i < 20; i++) {
+    const r = G.tick(built({ seed: `fev${i}` }), 30 * Y);
+    assert.ok(Object.values(r.pools).every((v) => v >= 0), 'i conti non vanno mai sotto zero');
+    for (const e of r.events) if (e.k === 'fev') { seen.add(e.v.id); signs.add(e.v.sign); }
+    const again = G.tick(built({ seed: `fev${i}` }), 30 * Y);
+    assert.deepEqual(r.events.filter((e) => e.k === 'fev').map((e) => e.v), again.events.filter((e) => e.k === 'fev').map((e) => e.v), 'deterministici dal seed');
+  }
+  assert.ok(seen.size >= 15 && signs.has('+') && signs.has('−'), `eventi positivi e negativi (${seen.size} diversi)`);
+  const quiet = G.tick(built({ seed: 'fev0' }), 1.5 * Y);
+  assert.ok(!quiet.events.some((e) => e.k === 'fev'), 'nessun evento nel primo anno');
 }
 
 // --- 5. progetti di sviluppo: tempi, finanziamento, rischio, eventi ---------------------
@@ -124,9 +211,12 @@ assert.ok(PH.plan('mva', { valid: true }, PR.BY_ID.get('rho')).prob < PH.plan('m
   // energia e luminosità: il progetto applica da sé il livello
   const e = G.tick(G.startProject(s, 'energy', null, {}), 6 * Y);
   assert.equal(e.energyLvl, 1);
-  // senza fondi di sviluppo il progetto non avanza
-  const poor = G.tick({ ...G.startProject(s, 'lumi', null, {}), pools: { ops: 0, analysis: 0, rnd: 0 } }, 0.9 * Y);
-  assert.equal(poor.projects.lumi.spent, 0);
+  // il costo intero si paga subito all'avvio; senza fondi il progetto non parte
+  const started = G.startProject(s, 'lumi', null, {});
+  near(started.pools.rnd, s.pools.rnd - started.projects.lumi.cost);
+  const mid = G.tick(started, 0.5 * Y);
+  near(mid.pools.rnd, started.pools.rnd, 1e-6 + 0); // lo sviluppo non toglie altro
+  assert.equal(G.startProject({ ...s, pools: { ...s.pools, rnd: 1 } }, 'lumi', null, {}).projects.lumi, undefined, 'senza fondi non parte');
   // tetto ai progetti contemporanei
   let many = s;
   for (const k of ['tracker', 'ecal', 'hcal', 'muon']) many = G.startProject(many, 'det', k, {});
@@ -183,7 +273,7 @@ assert.ok(PH.plan('mva', { valid: true }, PR.BY_ID.get('rho')).prob < PH.plan('m
   assert.ok(Math.abs(L - PH.lumiRate(r) * 2) < PH.lumiRate(r) * 0.01);
   // analisi: costa dal conto analisi
   r = G.autotuneCfg(r, 'rho');
-  const ac = G.analysisCost(PR.BY_ID.get('rho'), 'bump', { blind: true, valid: true });
+  const ac = G.analysisCost(r, PR.BY_ID.get('rho'), 'bump', { blind: true, valid: true });
   assert.ok(ac > 0 && ac <= 500);
   const a = G.startAnalysis(r, 'rho', 'bump', { blind: true, valid: true });
   assert.ok(a.jobs.rho);
@@ -230,76 +320,7 @@ for (const text of ['not json', 'null', '[]', '{"v":5}',
 }
 
 // --- 9. bot ----------------------------------------------------------------------
-const BEST = { peak: 'bump', rare: 'mva', nonres: 'mva', precision: 'fit' };
-
-function play({ score = 80, strategy = (p) => BEST[p.type], maxHours = 120, lazy = false }) {
-  let s = G.newState(0, 'bot');
-  const counts = { inconclusive: 0, review: 0, scooped: 0, rival: 0, claim: 0, 'proj.overrun': 0, 'proj.delay': 0, 'proj.boost': 0, 'proj.idea': 0, budget: 0 };
-  let lastTune = -1e9;
-  let lastProgram = null;
-  let seen = 0;
-  const firstDone = {};
-  const needs = (p) => {
-    const out = [];
-    for (const [k, lvl] of Object.entries(p.need)) if (s.det[k] < lvl) out.push(k);
-    return out;
-  };
-  for (let i = 0; i * 5 < maxHours * 3600; i++) {
-    s = G.tick(s, 5);
-    if (process.env.DBG && i % 7200 === 0) console.log((i * 5 / 3600).toFixed(0) + 'h', 't=' + s.t.toFixed(0), 'prog=' + s.program, 'run=' + !!s.run, 'sh=' + !!s.shutdown, 'ops=' + (s.pools.ops | 0), 'rnd=' + (s.pools.rnd | 0), 'L=' + ((s.data[s.program] || 0) | 0), 'proj=' + Object.keys(s.projects).join('|'), 'jobs=' + Object.keys(s.jobs).join('|'), 'pend=' + s.pending.length);
-    for (const e of s.events) if (e.n > seen && counts[e.k] !== undefined) counts[e.k]++;
-    seen = s.evN;
-    for (const id of Object.keys(s.done)) if (!(id in firstDone)) firstDone[id] = (i * 5) / 3600;
-    if (G.isComplete(s)) return { hours: (i * 5) / 3600, s, counts, firstDone };
-    if (lazy) continue;
-    for (const [id, job] of Object.entries(s.jobs)) if (job.state === 'confirm') s = G.confirmDiscovery(s, id, score);
-    for (const e of s.pending) s = G.resolveEvent(s, e.id, s.pools.rnd > e.pay * 4 ? 'pay' : 'accept');
-    if (G.totalFunds(s) < 3000 && G.canClaim(s, 'shape', 'free')) s = G.claimFunds(s, 'shape', score, 'free');
-    const ensure = (pool, cost) => {
-      if (s.pools[pool] >= cost) return;
-      const need = (cost - s.pools[pool]) / (1 - G.TRANSFER_FEE);
-      const donor = G.POOLS.filter((k) => k !== pool).sort((a, b) => s.pools[b] - s.pools[a])[0];
-      if (s.pools[donor] >= need * 1.2) s = G.transfer(s, donor, pool, need);
-    };
-    const open = PR.PROCESSES.filter((p) => G.isAvail(s, p.id) && !G.isDone(s, p.id));
-    const target = open.find((p) => !s.jobs[p.id]);
-    if (!target) continue;
-    if (s.program !== target.id) s = G.select(s, target.id);
-
-    // sviluppo: per il bersaglio e per il prossimo, per non restare fermi ad aspettare
-    for (const p of open.slice(0, 2)) {
-      for (const k of needs(p)) if (s.det[k] >= 1 && !s.projects[`det:${k}`]) s = G.startProject(s, 'det', k, { risk: 'safe' });
-      if (!G.energyOk(s, p.id) && !s.projects.energy) s = G.startProject(s, 'energy', null, { risk: 'safe' });
-    }
-    const wantLumi = Math.min(PH.MAX_LUMI, Math.max(0, Math.ceil(Math.log(target.L5 / 60) / Math.log(PH.LUMI_GROWTH))));
-    if (s.built && s.lumiLvl < wantLumi && !s.projects.lumi) s = G.startProject(s, 'lumi', null, { risk: 'safe' });
-    for (const k of PR.DETECTOR.aging) if (s.built && PH.damage(s, k) > 0.7 && s.det[k] >= 1 && s.det[k] < PR.DETECTOR.maxLevel && !s.projects[`det:${k}`]) s = G.startProject(s, 'det', k, { risk: 'safe' });
-    const wantDaq = Math.min(PR.DETECTOR.maxLevel, 1 + Math.ceil(s.lumiLvl / 3));
-    if (s.built && s.det.daq >= 1 && s.det.daq < wantDaq && !s.projects['det:daq']) s = G.startProject(s, 'det', 'daq', { risk: 'safe' });
-
-    // installazione: livello 0→1 subito, dal 2° solo con progetto pronto
-    if (!s.shutdown && !s.run) {
-      const items = [];
-      if (!s.built) items.push('accelerator');
-      for (const p of open.slice(0, 2)) for (const k of needs(p)) if (s.det[k] === 0 || (s.projects[`det:${k}`] && s.projects[`det:${k}`].state === 'ready')) items.push(k);
-      if (s.built && s.det.daq === 0) items.push('daq');
-      if (s.projects['det:daq'] && s.projects['det:daq'].state === 'ready') items.push('daq');
-      for (const k of PR.DETECTOR.aging) if (s.projects[`det:${k}`] && s.projects[`det:${k}`].state === 'ready') items.push(k);
-      if (items.length) s = G.startShutdown(s, [...new Set(items)], 'pp');
-    }
-    if (i * 5 - lastTune > 600 || s.program !== lastProgram) { s = G.autotuneCfg(s, target.id); lastTune = i * 5; lastProgram = s.program; }
-    const L = G.dataOf(s, target.id);
-    if (s.program === target.id && G.canRun(s, target.id)) {
-      const st = strategy(target);
-      const pl = PH.plan(st, { blind: true, valid: true }, target);
-      const e = PH.evaluate(s, target, G.cfgOf(s, target.id), L, PH.SYST_VALID);
-      const ready = L > 0 && e.ok && (target.kind === 'measure' ? e.sigma / pl.sens <= target.goal * 0.95 : e.znom * pl.sens >= 5.2);
-      if (ready) { ensure('analysis', G.analysisCost(target, st, { blind: true, valid: true })); s = G.startAnalysis(s, target.id, st, { blind: true, valid: true }); }
-      else if (!s.run) { ensure('ops', G.runCost(s, 2)); const r2 = G.startRun(s, 2); s = r2.run ? r2 : G.startRun(s, 1); }
-    }
-  }
-  return { hours: Infinity, s, counts, firstDone };
-}
+const { play } = require('./bot.js');
 
 const smart = play({});
 log('bot esperto:', smart.hours.toFixed(1), 'h', JSON.stringify(smart.counts));
@@ -309,6 +330,19 @@ if (!Number.isFinite(smart.hours)) {
   assert.fail(`il bot esperto non completa il gioco: ${JSON.stringify({ t: q.t, pools: q.pools.rnd | 0, ops: q.pools.ops | 0, an: q.pools.analysis | 0, budget: G.annualBudget(q), program: q.program, det: q.det, lumi: q.lumiLvl, e: q.energyLvl, built: q.built, run: q.run, shutdown: !!q.shutdown, projects: Object.keys(q.projects), done: Object.keys(q.done), L: q.data[q.program], jobs: Object.keys(q.jobs), age: q.age, ev: (() => { const pp = PR.BY_ID.get(q.program); const e = PH.evaluate(q, pp, G.cfgOf(q, pp.id), q.data[pp.id] || 0, 0.75); return { ok: e.ok, z: e.znom, S: e.S, B: e.B, loss: e.tg && e.tg.loss, cfg: G.cfgOf(q, pp.id) }; })() })}`);
 }
 assert.ok(smart.hours >= 2 && smart.hours <= 45, `durata fuori scala: ${smart.hours.toFixed(1)} h`);
+// ritmo dei risultati: ~56 risultati in ~7-9 h, uno ogni 5-10 min in media, più radi all'inizio e più fitti alla fine
+{
+  const times = Object.entries(smart.firstDone).sort((a, b) => a[1] - b[1]).map(([, h]) => h * 60);
+  assert.equal(times.length, 56, 'il catalogo ha 56 risultati');
+  assert.ok(smart.hours >= 6.5 && smart.hours <= 9.5, `durata totale ${smart.hours.toFixed(1)} h fuori dalle 6,5-9,5 h`);
+  const avg = (a, b) => (times[b - 1] - (a ? times[a - 1] : 0)) / (b - a);
+  const n = times.length;
+  const thirds = [avg(0, Math.floor(n / 3)), avg(Math.floor(n / 3), Math.floor((2 * n) / 3)), avg(Math.floor((2 * n) / 3), n)];
+  log('intervallo medio per terzo (min):', thirds.map((x) => x.toFixed(1)).join(' → '));
+  assert.ok(thirds.every((x) => x >= 5 && x <= 12), `intervalli per terzo fuori scala: ${thirds.map((x) => x.toFixed(1))}`);
+  assert.ok(thirds[0] > thirds[2], 'all\'inizio i risultati sono più radi che alla fine');
+  assert.ok(times[0] >= 8, 'il primo risultato non deve arrivare in pochi minuti');
+}
 
 const dumb = play({ strategy: () => 'cuts' });
 log('bot con strategia sbagliata:', dumb.hours.toFixed(1), 'h', JSON.stringify(dumb.counts));

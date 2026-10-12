@@ -9,6 +9,7 @@
   const CHOICES = 5;
   const MAX_SCORE = 100;
   const PENALTY_PER_EXTRA_LAUNCH = 10;
+  const SHAPE_SCALE = 1.3; // la forma nascosta è più grande: più facile colpirla
 
   const regular = (n, r) =>
     Array.from({ length: n }, (_, i) => {
@@ -71,7 +72,7 @@
     const dx = (r() - 0.5) * 0.12;
     const dy = (r() - 0.5) * 0.12;
     const [c, s] = [Math.cos(rot), Math.sin(rot)];
-    const poly = answer.pts.map(([x, y]) => [0.5 + dx + x * c - y * s, 0.5 + dy + x * s + y * c]);
+    const poly = answer.pts.map(([px, py]) => { const x = px * SHAPE_SCALE; const y = py * SHAPE_SCALE; return [0.5 + dx + x * c - y * s, 0.5 + dy + x * s + y * c]; });
     const others = shuffle(allowed.filter((sh) => sh.id !== answer.id), r).slice(0, CHOICES - 1);
     const choices = shuffle([answer, ...others], r).map((sh) => sh.id);
     return { seed: String(seed), answer: answer.id, poly, choices };

@@ -9,7 +9,7 @@
   const C = isNode ? require('./core.js') : root.Core;
 
   const SAVE_VERSION = 5;
-  const YEAR_S = 360;
+  const YEAR_S = 180;
   const STEP_S = 5;
   const OFFLINE_CAP_S = 8 * 3600;
   const OFFLINE_EFF = 0.5;
@@ -23,11 +23,11 @@
 
   // --- budget ----------------------------------------------------------------
   const POOLS = ['ops', 'analysis', 'rnd']; // corsa, analisi, sviluppo
-  const START_POOLS = { ops: 450, analysis: 200, rnd: 850 };
-  const DEFAULT_ALLOC = { ops: 45, analysis: 15, rnd: 40 };
+  const START_POOLS = { ops: 450, analysis: 200, rnd: 1300 };
+  const DEFAULT_ALLOC = { ops: 40, analysis: 20, rnd: 40 };
   const MIN_ALLOC = 10; // ogni conto riceve almeno il 10%: nessuna scelta può bloccare il gioco
   const BASE_BUDGET = 1000;
-  const CARRY = 0.5; // il non speso passa all'anno dopo al 50%
+  const CARRY = 0.75; // il non speso passa all'anno dopo al 75%: permette di risparmiare per i progetti più cari
   const BOOST_PER_VALUE = 0.25; // +25% della base per punto di importanza
   const BOOST_CAP = 4; // i finanziamenti temporanei non superano +400%
   const boostYears = (value) => (value <= 2 ? 6 : value <= 5 ? 10 : 14);
@@ -36,7 +36,7 @@
   // --- corse, analisi, progetti ------------------------------------------------
   const RUN_BASE = 40;
   const RUN_YEARS = [1, 2, 5];
-  const ANALYSIS_BASE = { cuts: 40, bump: 80, mva: 200, fit: 260 };
+  const ANALYSIS_MULT = { cuts: 0.5, bump: 0.7, mva: 0.9, fit: 1.1 }; // × 0.8 del costo di una corsa di un anno
   const TRANSFER_FEE = 0.1; // spostare fondi tra conti costa il 10%
   const MAX_PROJECTS = 3;
   const INSTALL_FRACTION = 0.25; // l'installazione costa un quarto del costo di sviluppo
@@ -45,13 +45,13 @@
   const EVENT_DEADLINE = 0.5; // anni per decidere su un ritardo, poi si accetta
   const MAX_PENDING = 5;
   const CLAIM_SCALE = { shape: 2.5, budget: 4 };
-  const CLAIM_COOLDOWN = 2;
+  const CLAIM_COOLDOWN = 0.5;
   const MAX_CLAIMS = 60;
 
   const COST = {
     energy: (i) => Math.ceil(40 * 1.6 ** i),
     lumi: (l) => Math.ceil(25 * 1.5 ** l),
-    det: (sub, lvl) => Math.ceil(PR.DETECTOR.baseCost[sub] * 2.2 ** lvl),
+    det: (sub, lvl) => Math.ceil(PR.DETECTOR.baseCost[sub] * 2.0 ** lvl),
   };
 
   const proc = (id) => PR.BY_ID.get(id);
@@ -66,7 +66,7 @@
       v: SAVE_VERSION, seed, pools: { ...START_POOLS }, alloc: { ...DEFAULT_ALLOC }, boosts: [], rep: 0, t: 0,
       collider: 'pp', energyLvl: 0, lumiLvl: 0,
       det: { ...PR.DETECTOR.start }, age: { tracker: 0, ecal: 0 },
-      shutdown: null, shutdowns: 0, built: false, run: null, projects: {}, pending: [], claims: {}, program: null,
+      shutdown: null, shutdowns: 0, built: false, run: null, projects: {}, pending: [], claims: {}, program: null, extra: [],
       data: {}, cfg: {}, jobs: {}, done: {}, availAt, rivalNoted: {},
       budgetBest: {}, events: [], evN: 0, tutorial: false, last: now,
     };
@@ -135,10 +135,11 @@
   };
   const energyOk = (s, id) => PH.energy(s) >= proc(id).thr[s.collider];
   const canRun = (s, id) => s.built && !s.shutdown && energyOk(s, id) && PH.detector(s, proc(id)).ok;
-  const runCost = (s, years) => Math.ceil(years * (RUN_BASE * 1.18 ** s.energyLvl * 1.1 ** s.lumiLvl + 10 * sum(s.det)));
+  const runCost = (s, years) => Math.ceil(years * PR.COLLIDERS[s.collider].runMul * (RUN_BASE * 1.18 ** s.energyLvl * 1.1 ** s.lumiLvl + 10 * sum(s.det)));
+  const programsOf = (s) => PH.activeIds(s);
   const unlockedBudget = (s) => s.shutdowns >= 1;
   const isComplete = (s) => PR.PROCESSES.every((p) => p.id in s.done);
-  const analysisCost = (p, strategy, opts) => Math.ceil(ANALYSIS_BASE[strategy] * (1 + 0.4 * p.tier) * (1 + (opts && opts.valid ? 0.2 : 0) + (opts && opts.blind ? 0.1 : 0)));
+  const analysisCost = (s, p, strategy, opts) => Math.ceil(0.8 * runCost(s, 1) * ANALYSIS_MULT[strategy] * (1 + (opts && opts.valid ? 0.2 : 0) + (opts && opts.blind ? 0.1 : 0)));
 
   function stats(s) {
     const d = Object.values(s.done);
@@ -170,7 +171,8 @@
     const fast = !!(opts && opts.fast);
     const years = (spec.years * RISKS[risk].years) / (fast ? FAST.rate : 1);
     const project = { kind, target: kind === 'det' ? target : null, cost: Math.ceil(spec.cost * (fast ? FAST.cost : 1)), years, spent: 0, risk, fast, stall: 0, state: 'dev' };
-    return ev({ ...s, projects: { ...s.projects, [key]: project } }, 'proj.start', { key });
+    if (!canPay(s, 'rnd', project.cost)) return s; // il costo si paga tutto subito; poi lo sviluppo procede col tempo
+    return ev({ ...spend(s, 'rnd', project.cost), projects: { ...s.projects, [key]: project } }, 'proj.start', { key });
   }
 
   function applyProjectDone(s, key, p) {
@@ -179,16 +181,13 @@
     return ev({ ...s, projects: { ...s.projects, [key]: { ...p, spent: p.cost, state: 'ready' } } }, 'proj.ready', { key });
   }
 
-  // Sviluppo: ogni anno un progetto richiede cost/years dal conto sviluppo; se il conto è a secco rallenta.
+  // Sviluppo: i fondi sono già stati pagati all'avvio; il progetto avanza solo col tempo (fermo se in ritardo).
   function advanceProjects(s, years) {
     let n = s;
     for (const [key, p] of Object.entries(s.projects)) {
       if (p.state !== 'dev' || n.t < p.stall) continue;
-      const need = Math.min(p.cost - p.spent, (p.cost / p.years) * years);
-      const draw = Math.min(need, n.pools.rnd);
-      if (draw <= 0) continue;
-      const next = { ...p, spent: p.spent + draw };
-      n = { ...spend(n, 'rnd', draw), projects: { ...n.projects, [key]: next } };
+      const next = { ...p, spent: Math.min(p.cost, p.spent + (p.cost / p.years) * years) };
+      n = { ...n, projects: { ...n.projects, [key]: next } };
       if (next.spent >= next.cost - 1e-9) n = applyProjectDone(n, key, next);
     }
     return n;
@@ -206,13 +205,16 @@
       const cur = n.projects[key];
       if (kind === 'overrun') {
         const pct = Math.round(15 + 20 * mag);
-        n = ev({ ...n, projects: { ...n.projects, [key]: { ...cur, cost: Math.ceil(cur.cost * (1 + pct / 100)) } } }, 'proj.overrun', { key, pct });
+        const cost = Math.ceil(cur.cost * (1 + pct / 100));
+        const extra = Math.min(cost - cur.cost, n.pools.rnd); // paghi subito il sovrapprezzo (quanto riesci)
+        n = ev({ ...spend(n, 'rnd', extra), projects: { ...n.projects, [key]: { ...cur, cost, spent: cur.spent * (cost / cur.cost) } } }, 'proj.overrun', { key, pct });
       } else if (kind === 'delay' && n.pending.length < MAX_PENDING) {
         const stall = Math.round((0.5 + mag) * 10) / 10;
         const id = `${key}@${year}`;
         n = ev({ ...n, pending: [...n.pending, { id, key, stall, pay: Math.ceil(cur.cost * 0.12), deadline: n.t + EVENT_DEADLINE }] }, 'proj.delay', { key, stall });
       } else if (kind === 'boost') {
-        n = ev({ ...n, projects: { ...n.projects, [key]: { ...cur, cost: Math.ceil(cur.cost * 0.85) } } }, 'proj.boost', { key });
+        const cost = Math.ceil(cur.cost * 0.85);
+        n = ev({ ...spend(n, 'rnd', -(cur.cost - cost)), projects: { ...n.projects, [key]: { ...cur, cost, spent: cur.spent * (cost / cur.cost) } } }, 'proj.boost', { key });
       } else if (kind === 'idea') {
         n = ev({ ...n, projects: { ...n.projects, [key]: { ...cur, spent: Math.min(cur.cost * 0.95, cur.spent + cur.cost * 0.15) } } }, 'proj.idea', { key });
       }
@@ -236,14 +238,14 @@
   const installYears = (sub, lvl) => PR.DETECTOR.years[sub] * (lvl === 0 ? PR.DETECTOR.firstLevel : 1);
 
   // items: 'accelerator' (solo se manca), sottosistema (+1 livello), 'collider' (cambio tipo). Dal 2° livello serve il progetto pronto.
-  function shutdownPlan(s, items) {
+  function shutdownPlan(s, items, collider) {
     let cost = 0;
     const years = [];
     const missing = [];
     for (const it of items) {
       if (it === 'accelerator') {
         if (s.built) return { ok: false, cost: 0, years: 0, missing };
-        cost += PR.ACCELERATOR.cost;
+        cost += PR.COLLIDERS[PR.COLLIDERS[collider] ? collider : 'pp'].cost;
         years.push(PR.ACCELERATOR.years);
       } else if (it === 'collider') {
         const pj = s.projects.collider;
@@ -267,36 +269,41 @@
     }
     if (years.length === 0 || missing.length) return { ok: false, cost: 0, years: 0, missing };
     const longest = Math.max(...years);
-    return { ok: true, cost, years: longest + OVERLAP * (years.reduce((x, y) => x + y, 0) - longest), missing };
+    const instant = items.every((it) => it === 'accelerator' || s.det[it] === 0);
+    return { ok: true, cost, years: longest + OVERLAP * (years.reduce((x, y) => x + y, 0) - longest), missing, instant };
   }
 
   // `collider`: tipo di acceleratore, scelto solo alla costruzione iniziale.
   function startShutdown(s, items, collider) {
     const unique = [...new Set(items)];
-    const pl = shutdownPlan(s, unique);
+    const pl = shutdownPlan(s, unique, collider);
     if (s.shutdown || s.run || !pl.ok || !canPay(s, 'rnd', pl.cost)) return s;
     const kind = PR.COLLIDERS[collider] ? collider : s.collider;
-    return ev({ ...spend(s, 'rnd', pl.cost), shutdown: { start: s.t, until: s.t + pl.years, items: unique, collider: kind } }, 'shutdown.start', { years: pl.years.toFixed(1) });
+    const started = { ...spend(s, 'rnd', pl.cost), shutdown: { start: s.t, until: s.t + pl.years, items: unique, collider: kind } };
+    // la prima costruzione (acceleratore e primi livelli) è immediata: non è un Long Shutdown
+    if (pl.instant) return finishShutdown(started, true);
+    return ev(started, 'shutdown.start', { years: pl.years.toFixed(1) });
   }
 
-  function finishShutdown(s) {
+  function finishShutdown(s, instant) {
     let det = { ...s.det };
     let age = { ...s.age };
     let projects = s.projects;
     let { collider, energyLvl, built } = s;
+    let extraOff = false;
     for (const it of s.shutdown.items) {
       if (it === 'accelerator') { built = true; collider = s.shutdown.collider; energyLvl = 0; continue; }
-      if (it === 'collider') { collider = other(collider); energyLvl = 0; projects = omit(projects, 'collider'); continue; }
+      if (it === 'collider') { collider = other(collider); energyLvl = 0; projects = omit(projects, 'collider'); extraOff = true; continue; }
       det = { ...det, [it]: Math.min(PR.DETECTOR.maxLevel, det[it] + 1) };
       projects = omit(projects, `det:${it}`);
       if (it in age) age = { ...age, [it]: 0 }; // sostituzione: nuovo sensore
     }
-    return ev({ ...s, det, age, collider, energyLvl, built, projects, shutdown: null, shutdowns: s.shutdowns + 1 }, 'shutdown.done', {});
+    return ev({ ...s, extra: extraOff ? [] : s.extra, det, age, collider, energyLvl, built, projects, shutdown: null, shutdowns: s.shutdowns + (instant ? 0 : 1) }, instant ? 'build.done' : 'shutdown.done', {});
   }
 
   // --- presa dati a pagamento e richieste di finanziamento -----------------
   function startRun(s, years) {
-    if (!RUN_YEARS.includes(years) || s.run || !s.program || !canRun(s, s.program)) return s;
+    if (!RUN_YEARS.includes(years) || s.run || !programsOf(s).some((id) => canRun(s, id))) return s;
     const cost = runCost(s, years);
     return canPay(s, 'ops', cost) ? ev({ ...spend(s, 'ops', cost), run: { start: s.t, end: s.t + years } }, 'run.start', { years }) : s;
   }
@@ -320,22 +327,33 @@
   }
 
   // --- programma di fisica, trigger e analisi ------------------------------
-  const select = (s, id) => (proc(id) && isAvail(s, id) && !isDone(s, id) ? { ...s, program: id } : s);
+  // Misure in corso: la prima è `program`, le altre `extra` (solo con collisore adronico, fino a PH.slots).
+  const withPrograms = (s, ids) => ({ ...s, program: ids[0] || null, extra: ids.slice(1) });
+  const select = (s, id) => (proc(id) && isAvail(s, id) && !isDone(s, id) ? withPrograms(s, [id, ...programsOf(s).filter((x) => x !== id)].slice(0, PH.slots(s))) : s);
+  function toggleProgram(s, id) {
+    if (!proc(id)) return s;
+    const cur = programsOf(s);
+    if (cur.includes(id)) return withPrograms(s, cur.filter((x) => x !== id));
+    if (!isAvail(s, id) || isDone(s, id) || cur.length >= PH.slots(s)) return s;
+    return withPrograms(s, [...cur, id]);
+  }
   const setCfg = (s, id, cfg) => ({ ...s, cfg: { ...s.cfg, [id]: { trig: Math.min(0.9, Math.max(0, cfg.trig)), cut: Math.min(1.2, Math.max(0, cfg.cut)) } } });
   const autotuneCfg = (s, id) => setCfg(s, id, PH.autotune(s, proc(id)));
 
-  function startAnalysis(s, id, strategy, opts) {
+  // `cuts`: tagli scelti dal giocatore; nel tutorial (livello 0) o se omessi si usano quelli giusti.
+  function startAnalysis(s, id, strategy, opts, cuts) {
     const p = proc(id);
     if (!p || !PH.STRATEGIES[strategy] || !isAvail(s, id) || isDone(s, id) || s.jobs[id] || dataOf(s, id) <= 0) return s;
     const o = { blind: !!(opts && opts.blind), valid: !!(opts && opts.valid) };
-    const cost = analysisCost(p, strategy, o);
+    const cost = analysisCost(s, p, strategy, o);
     if (!canPay(s, 'analysis', cost)) return s;
     const e = PH.evaluate(s, p, cfgOf(s, id), dataOf(s, id), o.valid ? PH.SYST_VALID : 1);
     if (!e.ok) return s;
     const pl = PH.plan(strategy, o, p);
+    const q = PH.cutQuality(p, p.tier === 0 || !Array.isArray(cuts) ? PH.goodCuts(p) : cuts);
     const job = {
-      state: 'run', strategy, opts: o, start: s.t, end: s.t + pl.years, base: pl.years, rounds: 0, p: pl.prob, sens: pl.sens,
-      snap: { z: e.z, znom: e.znom, sigma: e.sigma, L: dataOf(s, id) },
+      state: 'run', strategy, opts: o, start: s.t, end: s.t + pl.years, base: pl.years, rounds: 0, p: pl.prob, sens: pl.sens, cuts: q.pick, q: q.m, good: q.good, bad: q.bad,
+      snap: { z: e.z, znom: e.znom, sigma: e.sigma, L: dataOf(s, id), cfg: cfgOf(s, id) },
     };
     return { ...spend(s, 'analysis', cost), jobs: { ...s.jobs, [id]: job } };
   }
@@ -353,10 +371,10 @@
     let n = addBoost({
       ...s,
       rep: s.rep + p.value * f,
-      done: { ...s.done, [id]: { z: res.z || 0, sigma: res.sigma || 0, limit: !!res.limit, scooped, t: s.t } },
+      done: { ...s.done, [id]: { z: res.z || 0, sigma: res.sigma || 0, limit: !!res.limit, scooped, t: s.t, rep: p.value * f, boost: p.value * BOOST_PER_VALUE * f, years: boostYears(p.value), snap: res.snap ? { L: res.snap.L, cfg: res.snap.cfg } : null } },
       jobs: omit(s.jobs, id),
-      program: s.program === id ? null : s.program,
     }, p, f);
+    n = withPrograms(n, programsOf(n).filter((x) => x !== id));
     const availAt = { ...n.availAt };
     for (const q of PR.PROCESSES) if (!(q.id in availAt) && q.after.every((a) => a in n.done)) availAt[q.id] = n.t;
     n = { ...n, availAt };
@@ -365,26 +383,27 @@
 
   function finishJob(s, id, job) {
     const p = proc(id);
-    const z = job.snap.z * job.sens;
-    const znom = job.snap.znom * job.sens;
-    const sigma = job.snap.sigma / job.sens;
+    const qm = job.q || 1;
+    const z = job.snap.z * job.sens * qm;
+    const znom = job.snap.znom * job.sens * qm;
+    const sigma = job.snap.sigma / (job.sens * qm);
     const rest = omit(s.jobs, id);
     if (p.kind === 'measure') {
-      return sigma <= p.goal ? publish({ ...s, jobs: rest }, id, { sigma, z }) : ev({ ...s, jobs: rest }, 'inconclusive', { id });
+      return sigma <= p.goal ? publish({ ...s, jobs: rest }, id, { sigma, z, snap: job.snap }) : ev({ ...s, jobs: rest }, 'inconclusive', { id, good: job.good || 0, sub: PH.limitingSub(s, p) });
     }
     const exists = p.kind === 'discovery' || PH.searchExists(s, p);
     if (exists && z >= PH.Z_DISCOVERY) {
       return ev({ ...s, jobs: { ...s.jobs, [id]: { ...job, state: 'confirm', result: { z } } } }, 'confirm', { id });
     }
-    if (!exists && znom >= PH.Z_LIMIT) return publish({ ...s, jobs: rest }, id, { z: znom, limit: true });
-    return ev({ ...s, jobs: rest }, 'inconclusive', { id });
+    if (!exists && znom >= PH.Z_LIMIT) return publish({ ...s, jobs: rest }, id, { z: znom, limit: true, snap: job.snap });
+    return ev({ ...s, jobs: rest }, 'inconclusive', { id, good: job.good || 0, sub: PH.limitingSub(s, p) });
   }
 
   // Conferma di una scoperta col minigioco (analisi angolare): score 0 = da rifare.
   function confirmDiscovery(s, id, score) {
     const job = s.jobs[id];
     if (!job || job.state !== 'confirm') return s;
-    if (score > 0) return publish(s, id, { z: job.result.z, quality: 1 + Math.min(100, score) / 200 });
+    if (score > 0) return publish(s, id, { z: job.result.z, quality: 1 + Math.min(100, score) / 200, snap: job.snap });
     return ev({ ...s, jobs: { ...s.jobs, [id]: { ...job, state: 'run', rounds: job.rounds + 1, end: s.t + REVIEW_EXTRA * job.base } } }, 'confirmfail', { id });
   }
 
@@ -418,22 +437,51 @@
     return n;
   }
 
+  // Eventi casuali sui fondi (circa 4 anni su 10): ogni voce sposta una frazione del budget annuale su un conto (o su tutti).
+  const FUND_EVENTS = [
+    { id: 'grant', pool: 'rnd', frac: 0.3 }, { id: 'sponsor', pool: 'ops', frac: 0.25 }, { id: 'collab', pool: 'analysis', frac: 0.2 },
+    { id: 'donation', pool: 'rnd', frac: 0.15 }, { id: 'power_deal', pool: 'ops', frac: 0.12 }, { id: 'prize', pool: 'analysis', frac: 0.15 },
+    { id: 'royalties', pool: 'rnd', frac: 0.2 }, { id: 'open_day', pool: 'ops', frac: 0.1 }, { id: 'surplus', pool: 'all', frac: 0.1 },
+    { id: 'fellows', pool: 'analysis', frac: 0.1 },
+    { id: 'power_surge', pool: 'ops', frac: -0.2 }, { id: 'helium_leak', pool: 'ops', frac: -0.15 }, { id: 'cyber', pool: 'analysis', frac: -0.15 },
+    { id: 'strike', pool: 'rnd', frac: -0.2 }, { id: 'audit', pool: 'rnd', frac: -0.15 }, { id: 'inflation', pool: 'all', frac: -0.08 },
+    { id: 'flood', pool: 'rnd', frac: -0.25 }, { id: 'theft', pool: 'ops', frac: -0.1 }, { id: 'cuts', pool: 'all', frac: -0.1 },
+    { id: 'license', pool: 'analysis', frac: -0.1 },
+  ];
+  const FUND_EVENT_P = 0.4;
+
+  function fundEvent(s, year) {
+    if (year < 2) return s; // il primo anno si gioca tranquilli
+    const r = C.rng(C.hash(`${s.seed}:fev:${year}`));
+    if (r() >= FUND_EVENT_P) return s;
+    const e = FUND_EVENTS[Math.floor(r() * FUND_EVENTS.length)];
+    const amount = Math.round(e.frac * annualBudget(s));
+    const pools = { ...s.pools };
+    for (const k of POOLS) {
+      if (e.pool !== 'all' && e.pool !== k) continue;
+      const share = e.pool === 'all' ? (amount * s.alloc[k]) / 100 : amount;
+      pools[k] = Math.max(0, pools[k] + share);
+    }
+    return ev({ ...s, pools }, 'fev', { id: e.id, amt: Math.abs(amount), sign: amount >= 0 ? '+' : '−' });
+  }
+
   function advance(s, dt) {
     const years = dt / YEAR_S;
     let n = { ...s, t: s.t + years };
-    for (let y = Math.floor(s.t) + 1; y <= Math.floor(n.t); y++) n = projectEvents(creditYear(n), y);
+    for (let y = Math.floor(s.t) + 1; y <= Math.floor(n.t); y++) n = fundEvent(projectEvents(creditYear(n), y), y);
     n = advanceProjects(n, years);
     if (n.shutdown && n.t >= n.shutdown.until) {
       n = finishShutdown(n);
     } else if (n.run && n.t >= n.run.end) {
       n = ev({ ...n, run: null }, 'run.done', {});
-    } else if (n.run && n.program && canRun(n, n.program)) {
-      const add = PH.lumiRate(n) * years;
-      n = {
-        ...n,
-        data: { ...n.data, [n.program]: dataOf(n, n.program) + add },
-        age: { tracker: n.age.tracker + add, ecal: n.age.ecal + add },
-      };
+    } else if (n.run) {
+      const live = programsOf(n).filter((id) => canRun(n, id));
+      if (live.length) {
+        const add = PH.lumiRate(n) * years;
+        const data = { ...n.data };
+        for (const id of live) data[id] = dataOf(n, id) + add;
+        n = { ...n, data, age: { tracker: n.age.tracker + add, ecal: n.age.ecal + add } };
+      }
     }
     return noteRivals(runJobs(expirePending(n)));
   }
@@ -453,6 +501,16 @@
   const num = (v, lo, hi, d) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d);
   const int = (v, lo, hi, d) => Math.floor(num(v, lo, hi, d));
   const obj = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? v : {});
+
+  // Misure in corso valide: sbloccate, non completate, senza doppioni e nei limiti dei posti del collisore.
+  function sanePrograms(ids, done, collider, det) {
+    const ok = ids.filter((id, i, a) => typeof id === 'string' && PR.BY_ID.has(id) && a.indexOf(id) === i && !(id in done) && PR.BY_ID.get(id).after.every((x) => x in done));
+    const slots = PH.slots({ collider, det });
+    const list = ok.slice(0, slots);
+    return { program: list[0] || null, extra: list.slice(1) };
+  }
+
+  const cleanCfg = (c) => ({ trig: num(obj(c).trig, 0, 0.9, 0.3), cut: num(obj(c).cut, 0, 1.2, 0.3) });
 
   function validate(raw, now) {
     const base = newState(now, 'default');
@@ -491,7 +549,14 @@
       if (typeof obj(raw.availAt)[id] === 'number') availAt[id] = num(raw.availAt[id], 0, 1e6, 0);
       if (obj(raw.rivalNoted)[id] === true) rivalNoted[id] = true;
       const d = obj(raw.done)[id];
-      if (d) done[id] = { z: num(d.z, 0, 1e6, 0), sigma: num(d.sigma, 0, 1e6, 0), limit: d.limit === true, scooped: d.scooped === true, t: num(d.t, 0, 1e6, 0) };
+      if (d) {
+        const ds = obj(d.snap);
+        done[id] = {
+          z: num(d.z, 0, 1e6, 0), sigma: num(d.sigma, 0, 1e6, 0), limit: d.limit === true, scooped: d.scooped === true, t: num(d.t, 0, 1e6, 0),
+          rep: num(d.rep, 0, 1e4, 0), boost: num(d.boost, 0, 1e4, 0), years: num(d.years, 0, 100, 0),
+          snap: d.snap ? { L: num(ds.L, 0, 1e12, 0), cfg: cleanCfg(ds.cfg) } : null,
+        };
+      }
       const j = obj(raw.jobs)[id];
       if (j && PH.STRATEGIES[j.strategy] && (j.state === 'run' || j.state === 'confirm')) {
         const sn = obj(j.snap);
@@ -499,7 +564,8 @@
           state: j.state, strategy: j.strategy, opts: { blind: obj(j.opts).blind === true, valid: obj(j.opts).valid === true },
           start: num(j.start, 0, 1e6, 0), end: num(j.end, 0, 1e6, 0), base: num(j.base, 0.01, 100, 1),
           rounds: int(j.rounds, 0, MAX_ROUNDS, 0), p: num(j.p, 0, 1, 0.2), sens: num(j.sens, 0.1, 3, 1),
-          snap: { z: num(sn.z, 0, 1e6, 0), znom: num(sn.znom, 0, 1e6, 0), sigma: num(sn.sigma, 0, 1e9, 1e9), L: num(sn.L, 0, 1e12, 0) },
+          cuts: Array.isArray(j.cuts) ? j.cuts.filter((c) => PR.CUTS.includes(c)).slice(0, PR.MAX_CUTS) : [], q: num(j.q, 0.1, 1, 1), good: int(j.good, 0, PR.MAX_CUTS, 0), bad: int(j.bad, 0, PR.MAX_CUTS, 0),
+          snap: { z: num(sn.z, 0, 1e6, 0), znom: num(sn.znom, 0, 1e6, 0), sigma: num(sn.sigma, 0, 1e9, 1e9), L: num(sn.L, 0, 1e12, 0), cfg: cleanCfg(sn.cfg) },
           result: { z: num(obj(j.result).z, 0, 1e6, 0) },
         };
       }
@@ -523,7 +589,7 @@
       pools, alloc, boosts, rep: num(raw.rep, 0, 1e6, 0), t: num(raw.t, 0, 1e6, 0),
       collider, energyLvl: int(raw.energyLvl, 0, PR.COLLIDERS[collider].energies.length - 1, 0), lumiLvl: int(raw.lumiLvl, 0, PH.MAX_LUMI, 0),
       det, age, shutdown, shutdowns: int(raw.shutdowns, 0, 1000, 0), built: raw.built === true, run, projects, pending, claims,
-      program: PR.BY_ID.has(raw.program) ? raw.program : null,
+      ...sanePrograms([raw.program, ...(Array.isArray(raw.extra) ? raw.extra : [])], done, collider, det),
       data, cfg, jobs, done, availAt, rivalNoted, budgetBest,
       events: [], evN: int(raw.evN, 0, 1e9, 0), tutorial: raw.tutorial === true, last: num(raw.last, 0, now, now),
     };
@@ -542,11 +608,11 @@
   }
 
   const api = {
-    SAVE_VERSION, YEAR_S, MAX_ROUNDS, RUN_YEARS, CLAIM_COOLDOWN, POOLS, MIN_ALLOC, MAX_PROJECTS, RISKS, FAST, INSTALL_FRACTION, BASE_BUDGET, COST,
+    SAVE_VERSION, CARRY, YEAR_S, MAX_ROUNDS, RUN_YEARS, CLAIM_COOLDOWN, POOLS, MIN_ALLOC, MAX_PROJECTS, RISKS, FAST, INSTALL_FRACTION, BASE_BUDGET, COST,
     newState, repTotal, runCost, analysisCost, installYears, annualBudget, boostTotal, forecast, totalFunds, setAlloc, addFunds, transfer, TRANSFER_FEE,
     projectSpec, startProject, resolveEvent, startRun, canClaim, claimFunds,
     isDone, isAvail, dataOf, cfgOf, rivalAt, rivalFraction, energyOk, canRun, unlockedBudget, isComplete, stats,
-    shutdownPlan, startShutdown, select, setCfg, autotuneCfg, startAnalysis, confirmDiscovery, recordBudget, tick, validate, serialize, load,
+    FUND_EVENTS, shutdownPlan, startShutdown, select, toggleProgram, programsOf, setCfg, autotuneCfg, startAnalysis, confirmDiscovery, recordBudget, tick, validate, serialize, load,
   };
   if (isNode) module.exports = api;
   else root.Game = api;
