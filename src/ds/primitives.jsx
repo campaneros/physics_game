@@ -29,32 +29,13 @@ export function Badge({ tone = 'gold', className, children, ...rest }) {
   return <span className={cx('ds-badge', `ds-badge--${tone}`, className)} {...rest}>{children}</span>;
 }
 
-// Orbe del costo, in alto a sinistra sulle carte.
-export function Orb({ children, tone = 'blue', className }) {
-  return <span className={cx('ds-orb', `ds-orb--${tone}`, className)}>{children}</span>;
-}
-
-// Carta: cornice con rarità, nastro del titolo, riquadro illustrazione, corpo e badge d'angolo.
-export function Card({ title, titleClass, art, cost, rarity = 'common', badge, selected, locked, className, children, onClick, disabled, ...rest }) {
-  const Tag = onClick ? 'button' : 'div';
-  const props = onClick ? { type: 'button', onClick, disabled } : {};
+// Pulsante-pannello per le azioni principali: icona, etichetta e un badge con il numero che serve a colpo d'occhio.
+export function ActionButton({ icon, label, labelClass, badge, tone = 'blue', warn, className, ...rest }) {
   return (
-    <Tag className={cx('ds-card', `ds-card--${rarity}`, selected && 'is-selected', locked && 'is-locked', className)} {...props} {...rest}>
-      {cost != null && <Orb className="ds-card__cost">{cost}</Orb>}
-      {badge != null && <Badge className="ds-card__badge" tone="gold">{badge}</Badge>}
-      <span className="ds-card__ribbon"><span className={titleClass}>{title}</span></span>
-      <span className="ds-card__art">{typeof art === 'string' ? <Icon name={art} size={34} /> : art}{locked && <span className="ds-card__lock"><Icon name="lock" size={22} /></span>}</span>
-      {children != null && <span className="ds-card__body">{children}</span>}
-    </Tag>
-  );
-}
-
-// Reliquia: medaglione rotondo per i potenziamenti permanenti.
-export function Relic({ icon, label, level, locked, className, ...rest }) {
-  return (
-    <button type="button" className={cx('ds-relic', locked && 'is-locked', className)} aria-label={label} {...rest}>
-      <Icon name={locked ? 'lock' : icon} size={26} />
-      {level != null && !locked && <span className="ds-relic__lvl">{level}</span>}
+    <button type="button" className={cx('ds-action', `ds-action--${tone}`, warn && 'is-warn', className)} {...rest}>
+      {badge != null && <Badge className="ds-action__badge" tone={warn ? 'red' : 'gold'}>{badge}</Badge>}
+      <Icon name={icon} size={36} />
+      <span className={cx('ds-action__label', labelClass)}>{label}</span>
     </button>
   );
 }

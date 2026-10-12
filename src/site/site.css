@@ -1,13 +1,3 @@
-/* Vista Sito: mano di carte a ventaglio sotto la scena. */
-.hand { position: relative; z-index: 2; display: flex; justify-content: center; align-items: flex-end; margin-top: -26px; padding: 14px 6px 0; pointer-events: none; }
-.hand .cardbtn { pointer-events: auto; flex: 0 0 auto; width: 24vw; min-width: 76px; max-width: 112px; height: 146px; margin: 0 -5px; transform: translateY(var(--lift, 0)) rotate(var(--rot, 0)); }
-@media (hover: hover) { .hand button.cardbtn:hover:not(:disabled) { transform: translateY(calc(var(--lift, 0px) - 10px)) rotate(0deg); z-index: 5; } }
-.hand button.cardbtn:active:not(:disabled) { transform: translateY(calc(var(--lift, 0px) - 6px)) rotate(0deg) scale(1.05); z-index: 5; }
-.cardbtn .ds-card__art { flex: 1; }
-.cardbtn .ctitle { display: block; }
-.cardbtn.warn .ds-card__cost { background: radial-gradient(circle at 35% 28%, #fecaca, #dc2626 55%, #7f1d1d); }
-.cardbtn.warn { box-shadow: 0 0 0 2px var(--bad), 0 0 16px rgba(248, 113, 113, 0.6), var(--lift-lg); }
-.c-build .ds-card__art { background: radial-gradient(circle at 50% 40%, #6a7fb5, #1e2a4d); }
-.c-proj .ds-card__art { background: radial-gradient(circle at 50% 40%, #b58a3a, #3d2a0c); }
-.c-budget .ds-card__art { background: radial-gradient(circle at 50% 40%, #4f9a63, #12301f); }
-.c-run .ds-card__art { background: radial-gradient(circle at 50% 40%, #b0524a, #3d100d); }
+/* Vista Sito: riga di 4 pulsanti-azione sotto la scena. */
+.deck { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 18px; }
+.deck .ds-action { min-width: 0; }
