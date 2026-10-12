@@ -42,6 +42,12 @@ function StatusBanner({ s, p }) {
   return <div className="status is-todo" role="status">{tr(p.kind === 'measure' ? 'status.todo.measure' : 'status.todo.discovery')}</div>;
 }
 
+function FasterCollider({ p }) {
+  const c = PH.fasterCollider(p);
+  if (!c || c === 'same') return null;
+  return <p className="muted">{tr('physics.fastercol', { name: tr(`collider.${c}`) })}</p>;
+}
+
 export function TargetPanel({ s, p, sel, onSel }) {
   const id = p.id;
   const d = s.done[id];
@@ -60,6 +66,7 @@ export function TargetPanel({ s, p, sel, onSel }) {
       <StatusBanner s={s} p={p} />
       <p className="muted">{tr(`kind.${p.kind}`)}</p>
       <p className="muted">{tr(`hint.${p.type}`)}</p>
+      {!d && <FasterCollider p={p} />}
       <Requirements s={s} p={p} />
       {!d && <DetectorMatrix s={s} p={p} e={e} />}
       {!d && avail && <ProgramToggle s={s} id={id} />}

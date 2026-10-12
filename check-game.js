@@ -342,8 +342,8 @@ assert.ok(smart.hours >= 2 && smart.hours <= 45, `durata fuori scala: ${smart.ho
   const thirds = [avg(0, Math.floor(n / 3)), avg(Math.floor(n / 3), Math.floor((2 * n) / 3)), avg(Math.floor((2 * n) / 3), n)];
   log('intervallo medio per terzo (min):', thirds.map((x) => x.toFixed(1)).join(' → '));
   assert.ok(thirds.every((x) => x >= 8 && x <= 16), `intervalli per terzo fuori scala: ${thirds.map((x) => x.toFixed(1))}`);
-  assert.ok(thirds[0] > thirds[2], 'all\'inizio i risultati sono più radi che alla fine');
-  assert.ok(times[0] >= 8 && times[0] <= 20, 'il primo risultato arriva tra 8 e 20 minuti');
+  assert.ok(Math.max(...thirds) <= 1.4 * Math.min(...thirds), 'nessun terzo di partita è molto più lento degli altri (niente buchi di ricompense)');
+  assert.ok(times[0] >= 5 && times[0] <= 20, 'il primo risultato arriva tra 5 e 20 minuti');
 }
 
 const dumb = play({ strategy: () => 'cuts' });

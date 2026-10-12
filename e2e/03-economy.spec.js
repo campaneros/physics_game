@@ -135,13 +135,14 @@ test.describe('budget', () => {
   test('la previsione a 5 anni mostra 5 colonne e il boost di una pubblicazione decresce', async ({ game: page }) => {
     await built(page);
     await patch(page, { boosts: [{ amount: 0.4, start: 0, years: 6 }] });
+    const base = await page.evaluate(() => Game.BASE_BUDGET);
     const b0 = await page.evaluate(() => Game.annualBudget(UI.get(), 0));
     const b3 = await page.evaluate(() => Game.annualBudget(UI.get(), 4.5));
     const b7 = await page.evaluate(() => Game.annualBudget(UI.get(), 7));
-    expect(b0).toBe(1400);
+    expect(b0).toBe(Math.round(base * 1.4));
     expect(b3).toBeLessThan(b0);
     expect(b3).toBeGreaterThan(b7);
-    expect(b7).toBe(1000); // poi torna alla base: non è permanente
+    expect(b7).toBe(base); // poi torna alla base: non è permanente
     await page.locator('#hud-dev').click();
     await expect(page.locator('#overlay .fc')).toHaveCount(5);
   });

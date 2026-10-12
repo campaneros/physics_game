@@ -16,7 +16,7 @@
   const DETECTOR = {
     subsystems: ['tracker', 'ecal', 'hcal', 'muon', 'daq'],
     maxLevel: 4,
-    years: { tracker: 3, ecal: 3.5, hcal: 3.5, muon: 2, daq: 1.5 },
+    years: { tracker: 2.1, ecal: 2.45, hcal: 2.45, muon: 1.4, daq: 1.05 }, // -30%: la corsa è ferma durante una chiusura, quindi i tempi morti pesano
     baseCost: { tracker: 150, ecal: 200, hcal: 200, muon: 120, daq: 100 },
     start: { tracker: 0, ecal: 0, hcal: 0, muon: 0, daq: 0 },
     firstLevel: 0.25, // il primo livello di un sottosistema si installa in un quarto del tempo
@@ -126,7 +126,7 @@
   ];
 
   // Anni (dalla disponibilità) dopo cui un esperimento rivale pubblica: ~3× la durata di un giocatore esperto (tools/rivals.js).
-  const RIVAL = { rho: 7, omega: 11, phi: 23, kstar: 15, jpsi: 48, jpsi_xs: 18, psi2s: 30, upsilon: 40, ups23: 9, w: 21, b_lifetime: 23, z: 25, bs_mumu: 50, bmix: 30, w_mass: 34, lambdab: 57, z_width: 17, top: 22, sin2w: 26, top_xs: 21, ww: 72, single_top: 26, zz: 48, top_mass: 29, wz: 54, tt_gamma: 34, stop: 74, higgs: 84, wz_pol: 55, squark: 89, gluino: 101, vbs: 76, leptoquark: 42, vbfh: 48, h_tautau: 57, zprime: 68, heavy_nu: 75, h_mass: 80, dm_mono: 92, h_width: 19, hbb: 102, h_ww: 102, h_cp: 24, charged_h: 23, hcc: 23, tth: 31, hmumu: 137, graviton: 143, four_top: 24, ttz: 37, hh: 44, top_spin: 241, www: 199, h_self: 24, hzg: 209, wprime: 212 };
+  const RIVAL = { rho: 6, omega: 8, phi: 14, jpsi: 23, kstar: 14, jpsi_xs: 17, psi2s: 30, upsilon: 41, ups23: 10, b_lifetime: 22, w: 22, bs_mumu: 33, z: 17, lambdab: 42, bmix: 24, w_mass: 27, sin2w: 12, z_width: 16, top: 26, top_xs: 19, wz: 49, ww: 67, single_top: 25, top_mass: 29, zz: 57, tt_gamma: 34, wz_pol: 12, stop: 70, top_spin: 52, squark: 85, higgs: 86, gluino: 89, vbs: 65, vbfh: 43, leptoquark: 43, h_tautau: 57, zprime: 68, h_mass: 78, heavy_nu: 88, h_width: 19, dm_mono: 97, h_ww: 98, h_cp: 16, hbb: 117, hmumu: 120, graviton: 132, charged_h: 24, hcc: 27, tth: 35, four_top: 26, hzg: 178, www: 187, ttz: 38, wprime: 197, hh: 46, h_self: 23 };
 
   const RAW = CATALOG.map(([id, kind, type, menu, mass, pp, ee, need, tier, after, L5]) => ({
     id, kind, type, menu, mass, res0: RES[type][tier] * (type === 'peak' && tier === 0 ? 1 + 0.5 * (mass < 2) : 1), thr: { pp, ee }, need, L5,

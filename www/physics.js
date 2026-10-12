@@ -6,7 +6,7 @@
   const PR = isNode ? require('./processes.js') : root.Processes;
   const C = isNode ? require('./core.js') : root.Core;
 
-  const BASE_LUMI = 5; // fb⁻¹ all'anno a luminosità livello 0
+  const BASE_LUMI = 4.5; // fb⁻¹ all'anno a luminosità livello 0
   const MAX_LUMI = 12;
   const LUMI_GROWTH = 2.5; // la luminosità cresce di 2,5× per livello
   const DAQ_GROWTH = 6; // la banda del trigger cresce di 6× per livello DAQ
@@ -176,7 +176,7 @@
   const STRATEGIES = {
     cuts: { years: 0.25, p: 0.15, sens: { peak: 0.85, rare: 0.7, nonres: 0.6, precision: 0.6 } },
     bump: { years: 0.5, p: 0.2, sens: { peak: 1.0, rare: 0.8, nonres: 0.45, precision: 0.9 } },
-    mva: { years: 1.0, p: 0.45, sens: { peak: 1.15, rare: 1.3, nonres: 1.2, precision: 1.0 } },
+    mva: { years: 1.3, p: 0.45, sens: { peak: 1.15, rare: 1.3, nonres: 1.2, precision: 1.0 } },
     fit: { years: 1.3, p: 0.35, sens: { peak: 0.95, rare: 1.0, nonres: 1.1, precision: 1.25 } },
   };
 
@@ -201,11 +201,35 @@
     return { m: Math.min(1, 0.6 + 0.14 * good) * 0.85 ** bad, good, bad, pick };
   }
 
+  // Collisore più rapido per una scoperta: anni a 5σ con detector e luminosità di riferimento (stesso detector, energia massima di ciascun collisore).
+  // Serve a suggerire dove cercare un bersaglio: il leptonico vince su alcune (le Higgs), l'adronico è il generalista. Cache per bersaglio.
+  const REF_LUMI = 4;
+  const REF_DET = { tracker: 4, ecal: 4, hcal: 4, muon: 4, daq: 4 };
+  const yearsTo5 = (collider, p) => {
+    const s = { built: true, collider, energyLvl: PR.COLLIDERS[collider].energies.length - 1, lumiLvl: REF_LUMI, det: REF_DET, age: {}, program: p.id, extra: [], cfg: {}, seed: 'ref' };
+    const z = (L) => evaluate(s, p, DEFAULT_CFG, L, SYST_VALID).z;
+    let hi = 1e9;
+    if (z(hi) < Z_DISCOVERY) return Infinity;
+    let lo = 0;
+    for (let i = 0; i < 80; i++) { const mid = (lo + hi) / 2; if (z(mid) >= Z_DISCOVERY) hi = mid; else lo = mid; }
+    return hi / lumiRate(s);
+  };
+  const colliderCache = new Map();
+  function fasterCollider(p) {
+    if (p.kind !== 'discovery') return null;
+    if (!colliderCache.has(p.id)) {
+      const pp = yearsTo5('pp', p);
+      const ee = yearsTo5('ee', p);
+      colliderCache.set(p.id, ee < 0.9 * pp ? 'ee' : pp < 0.9 * ee ? 'pp' : 'same');
+    }
+    return colliderCache.get(p.id);
+  }
+
   const review = (seed, id, round, prob) => C.rng(C.hash(`${seed}:review:${id}:${round}`))() < prob;
 
   const api = {
     BASE_LUMI, MAX_LUMI, LUMI_GROWTH, AGE_SCALE, BANDWIDTH, Z_DISCOVERY, Z_LIMIT, SYST_VALID, BINS, SPAN, STRATEGIES,
-    goodCuts, cutQuality, lumiRate, pileup, energy, damage, searchExists, asimov, detector, relevant, limitingSub, slots, activeIds, cfgFor, upgradeGain, upgradeSummary, trigger, evaluate, autotune, histogram, plan, review,
+    goodCuts, cutQuality, fasterCollider, lumiRate, pileup, energy, damage, searchExists, asimov, detector, relevant, limitingSub, slots, activeIds, cfgFor, upgradeGain, upgradeSummary, trigger, evaluate, autotune, histogram, plan, review,
   };
   if (isNode) module.exports = api;
   else root.Physics = api;

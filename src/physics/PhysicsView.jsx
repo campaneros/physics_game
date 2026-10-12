@@ -6,7 +6,7 @@ import { ProgressBar } from './ProgressBar.jsx';
 import { TargetList } from './TargetList.jsx';
 import { TargetPanel } from './TargetPanel.jsx';
 
-const INITIAL_SEL = { strategy: 'bump', blind: true, valid: true, cuts: {}, lastCut: null };
+const INITIAL_SEL = { byId: {}, blind: true, valid: true, cuts: {}, lastCut: null };
 
 function Finale({ s }) {
   const st = G.stats(s);

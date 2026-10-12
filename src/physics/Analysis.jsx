@@ -4,15 +4,18 @@ import { Icon } from '../ds/icons.jsx';
 import { Button, Chip, Meter, Panel } from '../ds/primitives.jsx';
 
 const STRATS = Object.keys(PH.STRATEGIES);
+// Strategia adatta al tipo di segnale (picco: bump; ricerche rare e non risonanti: MVA; precisione: fit): suggerita di default.
+export const BEST = { peak: 'bump', rare: 'mva', nonres: 'mva', precision: 'fit' };
 
 // Scelta di strategia, tagli e opzioni; l'analisi parte solo con dati, fondi e (oltre il tutorial) almeno un taglio.
 export function AnalysisCard({ s, p, e, L, sel, onSel }) {
   const id = p.id;
+  const strategy = (sel.byId && sel.byId[id]) || BEST[p.type];
   const opts = { blind: sel.blind, valid: sel.valid };
   const guided = p.tier === 0;
   const chosen = guided ? PH.goodCuts(p) : sel.cuts[id] || [];
-  const pl = PH.plan(sel.strategy, opts, p);
-  const cost = G.analysisCost(s, p, sel.strategy, opts);
+  const pl = PH.plan(strategy, opts, p);
+  const cost = G.analysisCost(s, p, strategy, opts);
   const ready = L > 0 && e.ok;
   const toggleCut = (c) => {
     const cur = sel.cuts[id] || [];
@@ -28,9 +31,10 @@ export function AnalysisCard({ s, p, e, L, sel, onSel }) {
       <small className="muted">{tr('an.explain')}</small>
       {guided && <small className="tutorial">{tr('an.tutorial')}</small>}
       <div className="chips">
-        {STRATS.map((st) => <Chip key={st} pressed={st === sel.strategy} onClick={() => onSel({ ...sel, strategy: st })}>{tr(`an.strategy.${st}`)}</Chip>)}
+        {STRATS.map((st) => <Chip key={st} pressed={st === strategy} onClick={() => onSel({ ...sel, byId: { ...sel.byId, [id]: st } })}>{tr(`an.strategy.${st}`)}</Chip>)}
       </div>
-      <small className="muted">{tr(`an.strategy.${sel.strategy}.desc`)}</small>
+      <small className="muted">{tr(`an.strategy.${strategy}.desc`)}</small>
+      <small className="reco">{tr('an.recommended', { name: tr(`an.strategy.${BEST[p.type]}`) })}</small>
       <h3>{tr('an.cuts.title')}</h3>
       <small className="muted">{tr(`menu.hint.${p.menu}`)}</small>
       <div className="chips">
@@ -49,7 +53,7 @@ export function AnalysisCard({ s, p, e, L, sel, onSel }) {
       <Button
         variant="primary"
         disabled={!ready || s.pools.analysis < cost || (!guided && chosen.length === 0)}
-        onClick={() => UI.update((st) => G.startAnalysis(st, id, sel.strategy, opts, sel.cuts[id] || []))}
+        onClick={() => UI.update((st) => G.startAnalysis(st, id, strategy, opts, sel.cuts[id] || []))}
       >
         {tr('an.start')}
       </Button>

@@ -26,7 +26,7 @@
   const START_POOLS = { ops: 450, analysis: 200, rnd: 1300 };
   const DEFAULT_ALLOC = { ops: 40, analysis: 20, rnd: 40 };
   const MIN_ALLOC = 10; // ogni conto riceve almeno il 10%: nessuna scelta può bloccare il gioco
-  const BASE_BUDGET = 1000;
+  const BASE_BUDGET = 800;
   const CARRY = 0.75; // il non speso passa all'anno dopo al 75%: permette di risparmiare per i progetti più cari
   const BOOST_PER_VALUE = 0.25; // +25% della base per punto di importanza
   const BOOST_CAP = 4; // i finanziamenti temporanei non superano +400%
@@ -34,10 +34,13 @@
   const MAX_BOOSTS = 20;
 
   // --- corse, analisi, progetti ------------------------------------------------
-  const RUN_BASE = 40;
+  const RUN_BASE = 48;
   const RUN_YEARS = [1, 2, 5];
-  const ANALYSIS_MULT = { cuts: 0.5, bump: 0.7, mva: 0.9, fit: 1.1 }; // × 0.8 del costo di una corsa di un anno
+  const ANALYSIS_MULT = { cuts: 0.5, bump: 0.7, mva: 1.15, fit: 1.1 }; // × 0.8 del costo di una corsa di un anno
   const TRANSFER_FEE = 0.1; // spostare fondi tra conti costa il 10%
+  const RESCUE_FRACTION = 0.25; // ...ma sotto il 25% del budget annuale un conto si rifornisce senza commissione (rete di sicurezza)
+  const VALID_COST = 0.25; // validazione sulle regioni di controllo: +25% di fondi Analisi
+  const BLIND_COST = 0.2; // analisi cieca: +20% di fondi Analisi
   const MAX_PROJECTS = 3;
   const INSTALL_FRACTION = 0.25; // l'installazione costa un quarto del costo di sviluppo
   const RISKS = { safe: { years: 1.3, p: 0.2 }, bold: { years: 0.75, p: 0.5 } };
@@ -64,7 +67,7 @@
     for (const p of PR.PROCESSES) if (p.after.length === 0) availAt[p.id] = 0;
     return {
       v: SAVE_VERSION, seed, pools: { ...START_POOLS }, alloc: { ...DEFAULT_ALLOC }, boosts: [], rep: 0, t: 0,
-      collider: 'pp', energyLvl: 0, lumiLvl: 1,
+      collider: 'pp', energyLvl: 0, lumiLvl: 2,
       det: { ...PR.DETECTOR.start }, age: { tracker: 0, ecal: 0 },
       shutdown: null, shutdowns: 0, built: false, run: null, projects: {}, pending: [], claims: {}, program: null, extra: [],
       data: {}, cfg: {}, jobs: {}, done: {}, availAt, rivalNoted: {},
@@ -109,10 +112,13 @@
     return ok ? { ...s, alloc: { ...Object.fromEntries(POOLS.map((k) => [k, alloc[k]])) } } : s;
   }
 
+  // Commissione di un trasferimento verso `to`: nulla se quel conto è quasi a secco.
+  const transferFee = (s, to) => (s.pools[to] < RESCUE_FRACTION * annualBudget(s) ? 0 : TRANSFER_FEE);
+
   // Sposta fondi da un conto all'altro (con una piccola perdita): evita i blocchi quando un conto è troppo magro.
   function transfer(s, from, to, amount) {
     if (!POOLS.includes(from) || !POOLS.includes(to) || from === to || !(amount > 0) || amount > s.pools[from]) return s;
-    return { ...s, pools: { ...s.pools, [from]: s.pools[from] - amount, [to]: s.pools[to] + amount * (1 - TRANSFER_FEE) } };
+    return { ...s, pools: { ...s.pools, [from]: s.pools[from] - amount, [to]: s.pools[to] + amount * (1 - transferFee(s, to)) } };
   }
 
   // Fondi extra (sfide): divisi secondo l'allocazione corrente.
@@ -139,7 +145,7 @@
   const programsOf = (s) => PH.activeIds(s);
   const unlockedBudget = (s) => s.shutdowns >= 1;
   const isComplete = (s) => PR.PROCESSES.every((p) => p.id in s.done);
-  const analysisCost = (s, p, strategy, opts) => Math.ceil(0.8 * runCost(s, 1) * ANALYSIS_MULT[strategy] * (1 + (opts && opts.valid ? 0.2 : 0) + (opts && opts.blind ? 0.1 : 0)));
+  const analysisCost = (s, p, strategy, opts) => Math.ceil(0.8 * runCost(s, 1) * ANALYSIS_MULT[strategy] * (1 + (opts && opts.valid ? VALID_COST : 0) + (opts && opts.blind ? BLIND_COST : 0)));
 
   function stats(s) {
     const d = Object.values(s.done);
@@ -609,7 +615,7 @@
 
   const api = {
     SAVE_VERSION, CARRY, YEAR_S, MAX_ROUNDS, RUN_YEARS, CLAIM_COOLDOWN, POOLS, MIN_ALLOC, MAX_PROJECTS, RISKS, FAST, INSTALL_FRACTION, BASE_BUDGET, COST,
-    newState, repTotal, runCost, analysisCost, installYears, annualBudget, boostTotal, forecast, totalFunds, setAlloc, addFunds, transfer, TRANSFER_FEE,
+    newState, repTotal, runCost, analysisCost, installYears, annualBudget, boostTotal, forecast, totalFunds, setAlloc, addFunds, transfer, transferFee, TRANSFER_FEE,
     projectSpec, startProject, resolveEvent, startRun, canClaim, claimFunds,
     isDone, isAvail, dataOf, cfgOf, rivalAt, rivalFraction, energyOk, canRun, unlockedBudget, isComplete, stats,
     FUND_EVENTS, shutdownPlan, startShutdown, select, toggleProgram, programsOf, setCfg, autotuneCfg, startAnalysis, confirmDiscovery, recordBudget, tick, validate, serialize, load,

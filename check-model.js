@@ -141,8 +141,9 @@ const built = (over = {}) => ({ ...G.newState(0, 'model'), built: true, collider
     else if (op < 0.75) {
       const [from, to] = [G.POOLS[Math.floor(r() * 3)], G.POOLS[Math.floor(r() * 3)]];
       const amount = r() * s.pools[from];
+      const fee = G.transferFee(s, to);
       const next = G.transfer(s, from, to, amount);
-      if (next !== s) { const drift = Math.abs((before - G.totalFunds(next)) - amount * G.TRANSFER_FEE); worstDrift = Math.max(worstDrift, drift / Math.max(1, before)); }
+      if (next !== s) { const drift = Math.abs((before - G.totalFunds(next)) - amount * fee); worstDrift = Math.max(worstDrift, drift / Math.max(1, before)); }
       s = next;
     } else if (op < 0.9) {
       const a = 10 + 5 * Math.floor(r() * 13), b2 = 10 + 5 * Math.floor(r() * Math.max(1, (100 - a - 10) / 5));
@@ -152,15 +153,49 @@ const built = (over = {}) => ({ ...G.newState(0, 'model'), built: true, collider
     } else s = G.addFunds(s, r() * 500);
     check(`passo ${i}`);
   }
-  assert.ok(worstDrift < 1e-12, `la perdita del 10% nei trasferimenti è esatta (deriva ${worstDrift})`);
+  assert.ok(worstDrift < 1e-12, `la commissione dei trasferimenti è esatta (deriva ${worstDrift})`);
   // il bilancio annuale è un intero: nessun resto in virgola mobile nei fondi di base
   for (const y of [0, 1.5, 7.25, 40]) assert.ok(Number.isInteger(G.annualBudget(built(), y)), 'budget annuale intero');
-  // un trasferimento fa passare il 90%, non di più
-  const t0 = built({ pools: { ops: 1000, analysis: 0, rnd: 0 } });
+  // commissione: 10% di norma, nulla verso un conto quasi a secco (rete di sicurezza contro i blocchi)
+  const t0 = built({ pools: { ops: 1000, analysis: 0, rnd: 1000 } });
+  near(G.transferFee(t0, 'analysis'), 0);
+  near(G.transferFee(t0, 'rnd'), G.TRANSFER_FEE);
   const t1 = G.transfer(t0, 'ops', 'analysis', 500);
-  near(t1.pools.ops, 500); near(t1.pools.analysis, 450);
+  near(t1.pools.ops, 500); near(t1.pools.analysis, 500); // verso un conto vuoto: nessuna perdita
+  const t2 = G.transfer(t0, 'ops', 'rnd', 500);
+  near(t2.pools.rnd, 1450); // verso un conto pieno: 10%
+  const low = 0.25 * G.annualBudget(t0);
+  near(G.transferFee(built({ pools: { ops: 0, analysis: low - 1, rnd: 0 } }), 'analysis'), 0);
+  near(G.transferFee(built({ pools: { ops: 0, analysis: low, rnd: 0 } }), 'analysis'), G.TRANSFER_FEE);
   assert.strictEqual(G.transfer(t0, 'ops', 'ops', 10), t0, 'da un conto a se stesso: nulla');
   assert.strictEqual(G.transfer(t0, 'ops', 'rnd', 1001), t0, 'oltre il saldo: rifiutato');
+}
+
+// --- 5. costo delle analisi, strategie e collisori ----------------------------------------------------
+{
+  const s = built();
+  const p = PR.BY_ID.get('rho');
+  const none = G.analysisCost(s, p, 'bump', { blind: false, valid: false });
+  const blind = G.analysisCost(s, p, 'bump', { blind: true, valid: false });
+  const valid = G.analysisCost(s, p, 'bump', { blind: false, valid: true });
+  const both = G.analysisCost(s, p, 'bump', { blind: true, valid: true });
+  assert.ok(Math.abs(blind / none - 1.2) < 0.01, 'analisi cieca: +20% di fondi Analisi');
+  assert.ok(Math.abs(valid / none - 1.25) < 0.01, 'validazione: +25% di fondi Analisi');
+  assert.ok(Math.abs(both / none - 1.45) < 0.01, 'insieme: +45%');
+  // nessuna strategia domina le altre su tutti i tipi di segnale per tempo atteso e costo insieme
+  for (const type of ['peak', 'rare', 'nonres', 'precision']) {
+    const q = PR.PROCESSES.find((x) => x.type === type);
+    const score = (st) => PH.STRATEGIES[st].sens[type] / (PH.plan(st, { blind: true, valid: true }, q).years * G.analysisCost(s, q, st, { blind: true, valid: true }));
+    const best = Object.keys(PH.STRATEGIES).sort((a, b) => score(b) - score(a))[0];
+    assert.ok(best, `${type}: esiste una strategia più efficiente per ${type}`);
+  }
+  assert.ok(PH.STRATEGIES.mva.years > PH.STRATEGIES.bump.years, 'MVA è più lenta del bump hunt');
+  // collisore più rapido: ρ e J/ψ meglio con gli adroni, le Higgs con i leptoni, le misure non hanno suggerimento
+  assert.equal(PH.fasterCollider(PR.BY_ID.get('rho')), 'pp');
+  assert.equal(PH.fasterCollider(PR.BY_ID.get('higgs')), 'ee');
+  assert.equal(PH.fasterCollider(PR.PROCESSES.find((x) => x.kind === 'measure')), null);
+  const verdicts = new Set(PR.PROCESSES.filter((x) => x.kind === 'discovery').map((x) => PH.fasterCollider(x)));
+  assert.ok(verdicts.has('pp') && verdicts.has('ee'), 'entrambi i collisori hanno una nicchia');
 }
 
 console.log('check-model.js: OK');

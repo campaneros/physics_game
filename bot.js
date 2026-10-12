@@ -47,10 +47,12 @@ function play({ score = 80, strategy = (p) => BEST[p.type], maxHours = 120, lazy
     if (G.totalFunds(s) < 3000 && G.canClaim(s, 'shape', 'free')) s = G.claimFunds(s, 'shape', score, 'free');
     const ensure = (pool, cost) => {
       if (!transfers || s.pools[pool] >= cost) return;
-      const need = (cost - s.pools[pool]) / (1 - G.TRANSFER_FEE);
+      const need = (cost - s.pools[pool]) / (1 - G.transferFee(s, pool));
       const donor = G.POOLS.filter((k) => k !== pool).sort((a, b) => s.pools[b] - s.pools[a])[0];
       if (s.pools[donor] >= need * 1.2) s = G.transfer(s, donor, pool, need);
     };
+    // i progetti e le installazioni pagano dal fondo Sviluppo: se è corto si sposta (come farebbe un giocatore)
+    const startProj = (kind, target) => { const spec = G.projectSpec(s, kind, target); if (spec) ensure('rnd', Math.ceil(spec.cost)); s = G.startProject(s, kind, target, { risk: 'safe' }); };
     const open = PR.PROCESSES.filter((p) => G.isAvail(s, p.id) && !G.isDone(s, p.id));
     if (!open.length) continue;
     // misure attive: le più "a portata di mano" (requisiti già soddisfatti) fino ai posti disponibili; le altre servono a pianificare gli upgrade
@@ -67,15 +69,15 @@ function play({ score = 80, strategy = (p) => BEST[p.type], maxHours = 120, lazy
 
     // sviluppo: per i bersagli bloccati più vicini, per non restare fermi ad aspettare
     for (const p of blocked.slice(0, 3)) {
-      for (const k of needs(p)) if (s.det[k] >= 1 && !s.projects[`det:${k}`]) s = G.startProject(s, 'det', k, { risk: 'safe' });
-      if (!G.energyOk(s, p.id) && !s.projects.energy) s = G.startProject(s, 'energy', null, { risk: 'safe' });
+      for (const k of needs(p)) if (s.det[k] >= 1 && !s.projects[`det:${k}`]) startProj('det', k);
+      if (!G.energyOk(s, p.id) && !s.projects.energy) startProj('energy', null);
     }
     const maxL5 = Math.max(...wanted.map((p) => p.L5));
     const wantLumi = Math.min(PH.MAX_LUMI, Math.max(0, Math.ceil(Math.log(maxL5 / 60) / Math.log(PH.LUMI_GROWTH))));
-    if (s.built && s.lumiLvl < wantLumi && !s.projects.lumi) s = G.startProject(s, 'lumi', null, { risk: 'safe' });
-    for (const k of PR.DETECTOR.aging) if (s.built && PH.damage(s, k) > 0.7 && s.det[k] >= 1 && s.det[k] < PR.DETECTOR.maxLevel && !s.projects[`det:${k}`]) s = G.startProject(s, 'det', k, { risk: 'safe' });
+    if (s.built && s.lumiLvl < wantLumi && !s.projects.lumi) startProj('lumi', null);
+    for (const k of PR.DETECTOR.aging) if (s.built && PH.damage(s, k) > 0.7 && s.det[k] >= 1 && s.det[k] < PR.DETECTOR.maxLevel && !s.projects[`det:${k}`]) startProj('det', k);
     const wantDaq = Math.min(PR.DETECTOR.maxLevel, Math.max(2, 1 + Math.ceil(s.lumiLvl / 3)));
-    if (s.built && s.det.daq >= 1 && s.det.daq < wantDaq && !s.projects['det:daq']) s = G.startProject(s, 'det', 'daq', { risk: 'safe' });
+    if (s.built && s.det.daq >= 1 && s.det.daq < wantDaq && !s.projects['det:daq']) startProj('det', 'daq');
 
     // installazione: livello 0→1 subito, dal 2° solo con progetto pronto
     if (!s.shutdown && !s.run) {
@@ -85,7 +87,7 @@ function play({ score = 80, strategy = (p) => BEST[p.type], maxHours = 120, lazy
       if (s.built && s.det.daq === 0) items.push('daq');
       if (s.projects['det:daq'] && s.projects['det:daq'].state === 'ready') items.push('daq');
       for (const k of PR.DETECTOR.aging) if (s.projects[`det:${k}`] && s.projects[`det:${k}`].state === 'ready') items.push(k);
-      if (items.length) s = G.startShutdown(s, [...new Set(items)], 'pp');
+      if (items.length) { const list = [...new Set(items)]; const pl = G.shutdownPlan(s, list, 'pp'); if (pl.ok) ensure('rnd', Math.ceil(pl.cost)); s = G.startShutdown(s, list, 'pp'); }
     }
     if (i * 5 - lastTune > 600 || G.programsOf(s).join() !== lastProgram) { for (const id of G.programsOf(s)) s = G.autotuneCfg(s, id); lastTune = i * 5; lastProgram = G.programsOf(s).join(); }
     // analisi: ogni misura attiva parte quando la sensibilità attesa basta

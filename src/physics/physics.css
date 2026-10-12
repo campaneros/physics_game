@@ -58,3 +58,4 @@ canvas.hist { width: 100%; aspect-ratio: 480 / 220; border: var(--stroke) solid 
 .meter small:last-child { text-align: right; }
 .panel input[type="range"] { width: 100%; min-height: 44px; accent-color: var(--cyan); touch-action: pan-y; }
 @media (prefers-reduced-motion: reduce) { .target { transition: none; } }
+.reco { color: var(--neon-cyan); }
