@@ -12,9 +12,10 @@ import './budget/budget.css';
 import './play/minigame.css';
 import { App } from './App.jsx';
 import { Popups } from './popups/api.js';
+import { start } from './runtime.js';
 
-// Render sincrono: i moduli vecchi si montano nei contenitori (#site-host, …) all'evento load, che arriva dopo questo script.
-// i moduli vecchi (scena, ciclo di gioco) aprono i popup tramite window.Popups
+// window.Popups: il runtime (notizie, tutorial) e i test aprono i popup da fuori da React.
 window.Popups = Popups;
 const root = createRoot(document.getElementById('root'));
-flushSync(() => root.render(<App />));
+flushSync(() => root.render(<App />)); // render sincrono: il runtime parte con la UI già nel DOM
+start();

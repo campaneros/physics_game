@@ -1,10 +1,11 @@
+import { SceneView } from '../scene/SceneView.jsx';
 import { CommandDeck } from './CommandDeck.jsx';
 
-// #scene-host: scene.js vi disegna la sezione del sito/detector; la mano di carte è un componente React.
+// Scena SVG (sito e detector) e riga delle quattro azioni.
 export function SiteView() {
   return (
     <div id="site-host">
-      <div id="scene-host" />
+      <SceneView />
       <CommandDeck />
     </div>
   );

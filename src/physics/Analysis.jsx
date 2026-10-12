@@ -1,4 +1,4 @@
-import { Game as G, Minigame, Physics as PH, Processes as PR, UI, tr } from '../engine.js';
+import { Game as G, Physics as PH, Processes as PR, UI, tr } from '../engine.js';
 import { Popups } from '../popups/api.js';
 import { Icon } from '../ds/icons.jsx';
 import { Button, Chip, Meter, Panel } from '../ds/primitives.jsx';
@@ -57,21 +57,6 @@ export function AnalysisCard({ s, p, e, L, sel, onSel }) {
   );
 }
 
-// Conferma della scoperta: il minigioco si apre in un popup.
-function openConfirm(id) {
-  const p = PR.BY_ID.get(id);
-  const tier = PR.TIERS[p.tier];
-  UI.showOverlay((body) => {
-    const game = Minigame.create(body, {
-      seed: UI.randomSeed(), pool: tier.pool, maxLaunches: tier.maxLaunches,
-      label: tr('overlay.confirm', { name: tr(`proc.${id}`) }),
-      onCancel: () => UI.closeOverlay(),
-      onClose: (r) => { UI.closeOverlay(); UI.update((st) => G.confirmDiscovery(st, id, r.score)); },
-    });
-    return () => game.destroy();
-  });
-}
-
 export function JobCard({ s, id, j }) {
   const running = j.state === 'run';
   return (
@@ -79,7 +64,7 @@ export function JobCard({ s, id, j }) {
       <p>{running ? tr('an.running', { strategy: tr(`an.strategy.${j.strategy}`) }) : tr('an.confirm.hint')}</p>
       {running && <Meter value={(s.t - j.start) / (j.end - j.start)} label={tr('an.title')} />}
       <small className="muted">{tr('an.rounds', { n: j.rounds })}</small>
-      {!running && <Button variant="primary" onClick={() => openConfirm(id)}>{tr('an.confirm')}</Button>}
+      {!running && <Button variant="primary" onClick={() => Popups.confirm(id)}>{tr('an.confirm')}</Button>}
     </Panel>
   );
 }

@@ -1,30 +1,32 @@
-import { useEffect, useRef } from 'react';
-import { Minigame, UI, tr } from '../engine.js';
+import { useState } from 'react';
+import { UI, tr } from '../engine.js';
+import { Minigame } from '../minigame/Minigame.jsx';
 import { useTab } from '../store.js';
 
-// Sfida "La forma nascosta": il minigioco (canvas e puntatore) resta nel suo modulo, qui solo il ciclo di vita.
-// Parte da una partita libera; la sfida del giorno (stesso seed per tutti) è un'alternativa.
+const freeRound = (n) => ({ n, seed: UI.randomSeed(), label: tr('mode.free') });
+const dailyRound = (n) => ({ n, seed: UI.utcDay(), label: tr('mode.daily') });
+
+// Sfida "La forma nascosta": parte da una partita libera (forma casuale); la sfida del giorno (stesso seed per tutti) è un'alternativa.
+// Il minigioco si monta alla prima visita, quando il suo contenitore ha una misura.
 export function PlayView() {
   const tab = useTab();
-  const host = useRef(null);
-  const game = useRef(null);
-
-  useEffect(() => {
-    if (tab !== 'play' || game.current) return;
-    const mount = (seed, label) => {
-      if (game.current) game.current.destroy();
-      const daily = seed === UI.utcDay();
-      game.current = Minigame.create(host.current, {
-        seed, label, shareLabel: tr('share.btn'),
-        onNew: () => mount(UI.randomSeed(), tr('mode.free')),
-        onAlt: daily ? () => mount(UI.randomSeed(), tr('mode.free')) : () => mount(UI.utcDay(), tr('mode.daily')),
-        altLabel: daily ? tr('mode.free') : tr('mode.daily'),
-        onFinish: (r) => UI.claimReward('shape', r.score, seed),
-      });
-    };
-    mount(UI.randomSeed(), tr('mode.free'));
-  }, [tab]);
-  useEffect(() => () => { if (game.current) game.current.destroy(); }, []);
-
-  return <div id="play-host" ref={host} />;
+  const [round, setRound] = useState(null);
+  if (tab === 'play' && !round) setRound(freeRound(0));
+  const daily = round && round.seed === UI.utcDay();
+  return (
+    <div id="play-host">
+      {round && (
+        <Minigame
+          key={round.n}
+          seed={round.seed}
+          label={round.label}
+          shareLabel={tr('share.btn')}
+          onNew={() => setRound(freeRound(round.n + 1))}
+          onAlt={() => setRound(daily ? freeRound(round.n + 1) : dailyRound(round.n + 1))}
+          altLabel={daily ? tr('mode.free') : tr('mode.daily')}
+          onFinish={(r) => UI.claimReward('shape', r.score, round.seed)}
+        />
+      )}
+    </div>
+  );
 }

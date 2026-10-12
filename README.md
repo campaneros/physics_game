@@ -32,8 +32,8 @@ Tutto offline: nessun permesso di rete, nessun backend. Le cifre fisiche sono or
 
 ## Struttura
 
-- `src/` — interfaccia in React (Vite): `ds/` design system (token, icone, componenti; `npm run ds` genera la vetrina in `.ds-preview/ds.html`), `shell/` barra risorse, ticker e navigazione, `site/`, `physics/`, `budget/`, `play/`, `popups/`. Si compila con `npm run build` (o `npm run e2e`, che lo fa da solo) in `www/assets/` e `www/index.html`: non modificare questi due a mano, il template è `src/index.html`.
-- `www/` — app web caricata da Capacitor. Modello puro in JS vanilla: `core.js`, `processes.js`, `physics.js`, `game.js`, `budget.js`, `minigame.js`. Ponte con la UI: `ui.js` (stato, salvataggio, ciclo di gioco), `scene.js`/`scene-art.js`/`svg.js` (sito e detector in SVG). Testi: `i18n*.js`.
+- `src/` — interfaccia in React (Vite): `runtime.js` (stato, salvataggio, ciclo di gioco), `ds/` design system (token, icone, componenti; `npm run ds` genera la vetrina in `.ds-preview/ds.html`), `shell/` barra risorse, ticker e navigazione, `scene/` (sito e detector in SVG), `site/`, `physics/`, `budget/`, `play/` e `minigame/`, `popups/`. Si compila con `npm run build` (o `npm run e2e`, che lo fa da solo) in `www/assets/` e `www/index.html`: non modificare questi due a mano, il template è `src/index.html`.
+- `www/` — app web caricata da Capacitor. Solo il motore, in JS vanilla senza dipendenze (testato in Node da `check*.js`): `core.js`, `processes.js`, `physics.js`, `game.js`, `budget.js`; testi in `i18n*.js`.
 - `android/` — progetto Capacitor che impacchetta `www/` in un APK.
 - `check*.js` — test: `npm run check` (il bot di bilanciamento impiega un paio di minuti).
 

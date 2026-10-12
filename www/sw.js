@@ -1,6 +1,6 @@
 // Rete per prima (file sempre aggiornati), cache come ripiego offline. Cambia CACHE a ogni rilascio: i vecchi file vengono eliminati.
-const CACHE = 'acceleratore-v10';
-const SHELL = ['./', 'index.html', 'assets/app.js', 'assets/index.css', 'assets/kreon-latin-400-normal.woff2', 'assets/kreon-latin-700-normal.woff2', 'i18n.js', 'i18n-game.js', 'core.js', 'processes.js', 'physics.js', 'game.js', 'minigame.js', 'budget.js', 'ui.js', 'svg.js', 'scene-art.js', 'scene.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
+const CACHE = 'acceleratore-v11';
+const SHELL = ['./', 'index.html', 'assets/app.js', 'assets/index.css', 'assets/kreon-latin-400-normal.woff2', 'assets/kreon-latin-700-normal.woff2', 'i18n.js', 'i18n-game.js', 'core.js', 'processes.js', 'physics.js', 'game.js', 'budget.js', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
