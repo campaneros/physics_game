@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; manifest-src 'self'; worker-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; manifest-src 'self'; worker-src 'self'; connect-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="theme-color" content="#0b1220">
   <meta name="color-scheme" content="dark">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -14,43 +14,11 @@
   <link rel="icon" href="icon-192.png">
   <link rel="stylesheet" href="style.css">
   <title>Accelerator</title>
+  <script type="module" crossorigin src="./assets/app.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index.css">
 </head>
 <body>
-  <header class="top">
-    <div class="topbar">
-      <button id="help" class="round" type="button" data-i18n-aria="help.aria">?</button>
-      <div class="hud">
-        <button id="hud-dev" class="hud-i" type="button" data-i18n-aria="hud.funds"><span class="ico" data-icon="coin"></span><b id="hud-funds">0</b></button>
-        <div class="hud-i" role="group" data-i18n-aria="hud.year"><span class="ico" data-icon="clock"></span><b id="hud-year">0</b></div>
-        <div class="hud-i" role="group" data-i18n-aria="hud.energy"><span class="ico" data-icon="bolt"></span><b id="hud-energy">0</b></div>
-        <div class="hud-i" role="group" data-i18n-aria="hud.rep"><span class="ico" data-icon="star"></span><b id="hud-rep">0</b></div>
-      </div>
-      <button id="lang" class="round" type="button" data-i18n="lang.switch">IT</button>
-    </div>
-    <h1 class="sr" data-i18n="app.title">Accelerator</h1>
-    <p id="banner" role="status"></p>
-  </header>
-
-  <main>
-    <section id="view-site" class="view" data-i18n-aria="tab.site"><div id="site-host"></div></section>
-    <section id="view-physics" class="view" data-i18n-aria="tab.physics" hidden><div id="physics-host"></div></section>
-    <section id="view-play" class="view" data-i18n-aria="tab.play" hidden><div id="play-host"></div></section>
-    <section id="view-budget" class="view" data-i18n-aria="tab.budget" hidden>
-      <p id="budget-lock" class="card" data-i18n="budget.note.locked">Budget mode: unlocks after the first Long Shutdown.</p>
-      <div id="budget-host"></div>
-    </section>
-  </main>
-
-  <nav id="tabs" data-i18n-aria="aria.sections">
-    <button type="button" data-view="site" aria-selected="true" data-i18n="tab.site">Site</button>
-    <button type="button" data-view="physics" aria-selected="false" data-i18n="tab.physics">Physics</button>
-    <button type="button" data-view="play" aria-selected="false" data-i18n="tab.play">Challenge</button>
-    <button type="button" data-view="budget" aria-selected="false" data-i18n="tab.budget">Budget</button>
-  </nav>
-
-  <div id="overlay" hidden>
-    <div id="overlay-body"></div>
-  </div>
+  <div id="root"></div>
 
   <script src="i18n.js"></script>
   <script src="i18n-game.js"></script>

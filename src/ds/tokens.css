@@ -1,0 +1,46 @@
+/* Token del design system: ardesia + accenti CERN, contorni a inchiostro spessi come nei giochi di carte illustrati. */
+@font-face { font-family: 'Kreon'; font-weight: 400; font-display: swap; src: url('../../node_modules/@fontsource/kreon/files/kreon-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Kreon'; font-weight: 700; font-display: swap; src: url('../../node_modules/@fontsource/kreon/files/kreon-latin-700-normal.woff2') format('woff2'); }
+
+:root {
+  /* superfici */
+  --ink: #04070e;
+  --bg: #0b1220;
+  --bg-deep: #070c18;
+  --panel: #131c30;
+  --panel-hi: #1c2a47;
+  --panel-lo: #0d1527;
+  --line: #2a3756;
+  --text: #e6ebf5;
+  --muted: #94a3c0;
+  /* accenti */
+  --cern: #0053a1;
+  --cern-hi: #1d7fd6;
+  --cyan: #38bdf8;
+  --gold: #e3b34b;
+  --gold-d: #8a6420;
+  --good: #4ade80;
+  --bad: #f87171;
+  --warn: #fb923c;
+  --violet: #a78bfa;
+  /* rarità delle carte */
+  --rar-common: #94a3c0;
+  --rar-uncommon: var(--cyan);
+  --rar-rare: var(--gold);
+  --rar-epic: var(--violet);
+  /* contorni e ombre */
+  --stroke: 2.5px;
+  --stroke-thin: 1.5px;
+  --lift: 0 3px 0 var(--ink);
+  --lift-lg: 0 5px 0 var(--ink), 0 10px 18px rgba(0, 0, 0, 0.45);
+  --radius: 12px;
+  --radius-sm: 8px;
+  /* tipografia */
+  --font-display: 'Kreon', Georgia, 'Times New Roman', serif;
+  --font-body: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* movimento */
+  --t-fast: 120ms;
+  --t-med: 220ms;
+  --ease-pop: cubic-bezier(0.3, 1.5, 0.5, 1);
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+}

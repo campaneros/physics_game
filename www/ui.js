@@ -3,7 +3,6 @@
 (() => {
   'use strict';
   const G = Game;
-  const PH = Physics;
   const tr = I18n.t;
 
   const SAVE_KEY = 'accel-save-v5';
@@ -63,7 +62,13 @@
   const modules = [];
   const newsShown = new Set();
 
-  function banner(text) { $('banner').textContent = text; }
+  // Ponte verso React: la shell (HUD, ticker, tab) legge lo stato da qui e si aggiorna via subscribe.
+  const listeners = new Set();
+  const notify = () => listeners.forEach((fn) => fn());
+  let tab = 'site';
+  let bannerText = '';
+
+  function banner(text) { bannerText = text; notify(); }
 
   function eventText(e) {
     const v = { ...e.v };
@@ -190,27 +195,30 @@
   }
 
   function showTab(name) {
-    document.querySelectorAll('#tabs button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.view === name)));
-    document.querySelectorAll('.view').forEach((v) => { v.hidden = v.id !== `view-${name}`; });
+    tab = name;
+    notify();
+  }
+
+  // Chiamata da React dopo che la vista è visibile: i moduli vecchi misurano il proprio contenitore alla creazione.
+  function afterTab(name) {
     if (name === 'play') ensureFree();
     if (name === 'budget') ensureBudget();
     window.dispatchEvent(new Event('resize'));
   }
 
+  function switchLang() {
+    I18n.setLang(I18n.otherLang());
+    save();
+    location.reload();
+  }
+
   // --- ciclo -----------------------------------------------------------------
   function render() {
-    $('hud-funds').textContent = fmt(s.pools.rnd);
-    $('hud-year').textContent = s.t.toFixed(1);
-    const e = PH.energy(s);
-    $('hud-energy').textContent = e >= 1000 ? `${(e / 1000).toFixed(1)} TeV` : `${fmt(e)} GeV`;
-    $('hud-rep').textContent = G.repTotal(s).toFixed(1);
-    const open = G.unlockedBudget(s);
-    $('budget-lock').hidden = open;
-    $('budget-host').hidden = !open;
     flushEvents();
     const pending = s.pending[0];
     if (pending && $('overlay').hidden && !newsShown.has(pending.id)) { newsShown.add(pending.id); Popups.news(pending.id); }
     for (const m of modules) m.render(s);
+    notify();
   }
 
   function update(fn) {
@@ -219,19 +227,17 @@
   }
 
   window.UI = {
-    tr, el, button, fmt, fmtYears, randomSeed, utcDay, banner, showOverlay, closeOverlay, showTab,
+    tr, el, button, fmt, fmtYears, randomSeed, utcDay, banner, showOverlay, closeOverlay, showTab, afterTab, openHelp, switchLang,
     get: () => s,
+    getTab: () => tab,
+    getBanner: () => bannerText,
+    subscribe: (fn) => { listeners.add(fn); return () => listeners.delete(fn); },
     update,
     register: (m) => modules.push(m),
   };
 
   function boot() {
     I18n.apply();
-    document.querySelectorAll('#tabs button').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.view)));
-    $('lang').addEventListener('click', () => { I18n.setLang(I18n.otherLang()); save(); location.reload(); });
-    $('help').addEventListener('click', openHelp);
-    $('hud-dev').addEventListener('click', () => Popups.budget());
-    document.querySelectorAll('[data-icon]').forEach((e) => e.append(SVG.iconSvg(e.dataset.icon, 22)));
     for (const m of modules) if (m.init) m.init();
     resume();
     if (!s.tutorial) { s = { ...s, tutorial: true }; openHelp(); }

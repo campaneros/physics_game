@@ -43,22 +43,28 @@ assert.equal(require('./www/game.js').FUND_EVENTS.length, 20, 'venti eventi sui 
 
 // 3. chiavi usate nel codice e nell'HTML; chiavi mai usate; niente italiano nel codice
 const stripComments = (src) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"`])\/\/.*$/gm, '$1');
-const jsFiles = fs.readdirSync(WWW).filter((f) => f.endsWith('.js') && !['i18n.js', 'i18n-game.js', 'sw.js'].includes(f));
-const html = fs.readFileSync(path.join(WWW, 'index.html'), 'utf8');
+// moduli classici in www/ + sorgenti React in src/ (www/index.html e www/assets/ sono output di build)
+const SRC = path.join(__dirname, 'src');
+const walk = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((d) => (d.isDirectory() ? walk(path.join(dir, d.name)) : [path.join(dir, d.name)]));
+const jsFiles = [
+  ...fs.readdirSync(WWW).filter((f) => f.endsWith('.js') && !['i18n.js', 'i18n-game.js', 'sw.js'].includes(f)).map((f) => path.join(WWW, f)),
+  ...walk(SRC).filter((f) => /\.jsx?$/.test(f)),
+];
+const html = fs.readFileSync(path.join(SRC, 'index.html'), 'utf8');
 const accented = /[àèéìòùÀÈÉÌÒÙ]/;
 const prefixes = [];
 let allCode = html;
 for (const f of jsFiles) {
-  const src = stripComments(fs.readFileSync(path.join(WWW, f), 'utf8'));
+  const src = stripComments(fs.readFileSync(f, 'utf8'));
   allCode += src;
   for (const m of src.matchAll(/\btr\(\s*(['"])([\w.]+)\1/g)) need(m[2]);
   for (const m of src.matchAll(/plural\(\s*'(\w+)'/g)) prefixes.push(`${m[1]}.`);
   for (const m of src.matchAll(/\btr\(\s*`([\w.]+)\$\{/g)) {
     prefixes.push(m[1]);
-    assert.ok([...keys].some((k) => k.startsWith(m[1])), `${f}: nessuna chiave con prefisso ${m[1]}`);
+    assert.ok([...keys].some((k) => k.startsWith(m[1])), `${path.basename(f)}: nessuna chiave con prefisso ${m[1]}`);
   }
   for (const m of src.matchAll(/(['"`])(?:\\.|(?!\1)[^\\])*\1/g)) {
-    assert.ok(!accented.test(m[0]), `${f}: testo italiano nel codice: ${m[0].slice(0, 60)}`);
+    assert.ok(!accented.test(m[0]), `${path.basename(f)}: testo italiano nel codice: ${m[0].slice(0, 60)}`);
   }
 }
 for (const m of html.matchAll(/data-i18n(?:-aria)?="([\w.]+)"/g)) need(m[1]);
